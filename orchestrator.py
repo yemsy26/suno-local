@@ -359,11 +359,13 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     lyrics_str = state.prompt 
     words = len(lyrics_str.split())
     # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 180s.
-    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 4.0))
-    log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
-    
+    # Inferir genero de la voz a partir del seed (1111=Femenina, 2222=Masculina)
+    voz_tag = "Voz Femenina Clara"
+    if state.synthetic_voice_seed and "222" in str(state.synthetic_voice_seed):
+        voz_tag = "Voz Masculina Potente, Tono Profundo"
+        
     # Inyectar tags ocultos para forzar español nativo y evitar confusiones del LangSegment
-    hidden_tags = "[es, Voz Femenina Clara, Sin Intro]"
+    hidden_tags = f"[es, {voz_tag}, Sin Intro]"
     enhanced_prompt = f"{hidden_tags}\n{lyrics_str}"
     
     # Preparar el comando
@@ -1032,7 +1034,11 @@ def _run_ffmpeg_mix(
 
     filter_complex = (
         f"[0:a]volume={beat_linear:.4f}[beat];"
-        f"[1:a]aresample=44100,aformat=channel_layouts=stereo,volume={vocal_linear:.4f}[voz];"
+        # Rack de Mastering Vocal: Resample -> Stereo -> EQ (cortar graves, dar brillo) -> Compresion -> Reverb sutil -> Volumen
+        f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
+        f"highpass=f=120,highshelf=f=8000:g=4,"
+        f"acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=4,"
+        f"aecho=0.8:0.6:40:0.2,volume={vocal_linear:.4f}[voz];"
         f"[beat][voz]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
         f"[mixed]loudnorm=I={target_lufs}:TP=-1.0:LRA=11[out]"
     )
