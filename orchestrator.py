@@ -362,8 +362,8 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     estimated_duration = min(180.0, max(20.0, (words * 0.4) + 4.0))
     log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
-    # Inyectar tags ocultos para forzar español nativo y eliminar intro larga
-    hidden_tags = "[No Intro, Direct Vocal Start, Clear Native Spanish Vocals, Perfect Spanish Pronunciation, Latin Accent]"
+    # Inyectar tags ocultos para forzar español nativo y evitar confusiones del LangSegment
+    hidden_tags = "[es, Voz Femenina Clara, Sin Intro]"
     enhanced_prompt = f"{hidden_tags}\n{lyrics_str}"
     
     # Preparar el comando
