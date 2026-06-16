@@ -650,6 +650,9 @@ function initStudio() {
             formData.append('voice_model', voiceModel);
         }
 
+        const useGenericVoice = document.getElementById('use-generic-voice')?.checked || false;
+        formData.append('use_generic_voice', useGenericVoice);
+
         try {
             const res = await fetch(`${API_BASE}/generate`, {
                 method: 'POST',

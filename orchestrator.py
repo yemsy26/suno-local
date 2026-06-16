@@ -160,8 +160,8 @@ class PipelineState:
     stage: str                          = "INIT"
     errors: list                        = field(default_factory=list)
     timings: dict                       = field(default_factory=dict)
-
     # Control via API
+    use_generic_voice: bool             = field(default=False)
     api_checkpoint_event: Optional[Any]  = field(default=None)
     api_checkpoint_action: Optional[str] = field(default=None)
 
@@ -1143,7 +1143,11 @@ class MusicGenerationPipeline:
                 return state
 
             # ETAPA 4: Clonacion RVC
-            state = stage_rvc_clone(state, self.config)
+            if state.use_generic_voice:
+                log.info("[ETAPA 4] Omitiendo RVC porque se solicitó Voz Genérica.")
+                state.voz_propia_path = state.voz_generica_path
+            else:
+                state = stage_rvc_clone(state, self.config)
             if state.stage == "FAILED":
                 return state
 
