@@ -372,7 +372,7 @@ async def generate_song(
     prompt:      str           = Form(...),
     style:       Optional[str] = Form(None),
     voice_model: Optional[str] = Form(None),
-    use_generic_voice: bool    = Form(False),
+    synthetic_voice_seed: int  = Form(-1),
 ):
     """
     Ruta 1: Genera cancion completa desde letra (y estilo) usando el backend configurado.
@@ -382,15 +382,17 @@ async def generate_song(
     temp_path.mkdir(parents=True, exist_ok=True)
 
     config = load_config()
-    if voice_model:
+    if voice_model and voice_model.lower() != "none":
         config.rvc_model_path = voice_model
         idx = voice_model.replace('.pth', '.index')
         if Path(idx).exists():
             config.rvc_index_path = idx
+    elif voice_model and voice_model.lower() == "none":
+        config.rvc_model_path = "none"
 
     full_prompt = f"[{style}]\n{prompt}" if style else prompt
 
-    state = PipelineState(job_id=job_id, prompt=full_prompt, stage="INIT", use_generic_voice=use_generic_voice)
+    state = PipelineState(job_id=job_id, prompt=full_prompt, stage="INIT", synthetic_voice_seed=synthetic_voice_seed)
 
     loop:      asyncio.AbstractEventLoop = asyncio.get_event_loop()
     log_queue: asyncio.Queue            = asyncio.Queue()

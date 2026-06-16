@@ -435,9 +435,8 @@ async function loadVoices() {
         const res = await fetch(API_BASE + '/api/voices');
         if (!res.ok) throw new Error('Failed to fetch voices');
         const data = await res.json();
-        selector.innerHTML = '';
+        selector.innerHTML = '<option value="none">❌ Ninguno (Usar solo la Sintética)</option>';
         if (data.voices.length === 0) {
-            selector.innerHTML = '<option value=\"\">No hay voces disponibles</option>';
             return;
         }
         
@@ -650,8 +649,8 @@ function initStudio() {
             formData.append('voice_model', voiceModel);
         }
 
-        const useGenericVoice = document.getElementById('use-generic-voice')?.checked || false;
-        formData.append('use_generic_voice', useGenericVoice);
+        const syntheticVoiceSeed = document.getElementById('synthetic-voice-selector')?.value || '-1';
+        formData.append('synthetic_voice_seed', syntheticVoiceSeed);
 
         try {
             const res = await fetch(`${API_BASE}/generate`, {

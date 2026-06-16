@@ -161,7 +161,7 @@ class PipelineState:
     errors: list                        = field(default_factory=list)
     timings: dict                       = field(default_factory=dict)
     # Control via API
-    use_generic_voice: bool             = field(default=False)
+    synthetic_voice_seed: int           = field(default=-1)
     api_checkpoint_event: Optional[Any]  = field(default=None)
     api_checkpoint_action: Optional[str] = field(default=None)
 
@@ -375,7 +375,8 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
         "--lyrics", lyrics_str.replace('\n', '\\n'),
         "--duration", str(estimated_duration),
         "--output_path", str(output_wav.absolute()),
-        "--device_id", "0"
+        "--device_id", "0",
+        "--seed", str(state.synthetic_voice_seed)
     ]
     
     log.info(f"[ACE-Step] Ejecutando inferencia en {ace_repo}...")
@@ -1147,8 +1148,8 @@ class MusicGenerationPipeline:
                 return state
 
             # ETAPA 4: Clonacion RVC
-            if state.use_generic_voice:
-                log.info("[ETAPA 4] Omitiendo RVC porque se solicitó Voz Genérica.")
+            if not self.config.rvc_model_path or self.config.rvc_model_path.lower() == "none":
+                log.info("[ETAPA 4] Omitiendo RVC porque se seleccionó 'Ninguno'. Se usará la Voz Sintética.")
                 state.voz_propia_path = state.voz_generica_path
             else:
                 state = stage_rvc_clone(state, self.config)

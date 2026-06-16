@@ -31,15 +31,19 @@
                 </a>
             </nav>
             <div class="global-settings" style="margin-bottom: 16px;">
-                <label for="global-voice-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-microphone-lines"></i> Modelo de Voz (RVC)</label>
-                <select id="global-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer; margin-bottom: 10px;">
-                    <option value="">Cargando voces...</option>
+                <label for="synthetic-voice-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-robot"></i> Cantante Original (IA Base)</label>
+                <select id="synthetic-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer; margin-bottom: 12px;">
+                    <option value="-1">🎲 Aleatoria (Sorpréndeme)</option>
+                    <option value="1234">👩 Voz Femenina 1 (Pop Dulce)</option>
+                    <option value="5678">👩 Voz Femenina 2 (Potente/Rock)</option>
+                    <option value="9012">👨 Voz Masculina 1 (Tenor Latino)</option>
+                    <option value="3456">👨 Voz Masculina 2 (Grave/Profunda)</option>
                 </select>
-                
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); cursor: pointer;">
-                    <input type="checkbox" id="use-generic-voice" style="cursor: pointer;">
-                    Omitir RVC (Usar Voz Genérica)
-                </label>
+
+                <label for="global-voice-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-microphone-lines"></i> Filtro Clonador (RVC)</label>
+                <select id="global-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer;">
+                    <option value="none">❌ Ninguno (Usar solo la Sintética)</option>
+                </select>
             </div>
             <div class="status-indicator">
                 <div class="gpu-status">
