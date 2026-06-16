@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Suno-Local – Dependencias Python
+# RTX 4060 | CUDA 12.x | Python 3.11+
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Core API ──────────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic
+
+# ── HTTP / async ──────────────────────────────────────────────────────────────
+requests==2.32.2
+httpx==0.27.0
+aiofiles==23.2.1
+
+# ── PyTorch (CUDA 12.1 — ajustar según tu versión de CUDA) ───────────────────
+# Instalar manualmente si la versión automática no detecta CUDA:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+torch>=2.3.0
+torchaudio>=2.3.0
+
+# ── Audio ─────────────────────────────────────────────────────────────────────
+pydub==0.25.1
+soundfile==0.12.1
+librosa==0.10.2
+numpy>=1.26.0
+
+# ── UVR5 / separación de stems ───────────────────────────────────────────────
+audio-separator[gpu]==0.17.4   # Incluye onnxruntime-gpu y MDX-Net
+
+# ── RVC ───────────────────────────────────────────────────────────────────────
+# Opción A (recomendada): rvc-python
+# rvc-python==0.2.2 # Requiere Python <3.11. Descomentarlo si usas Python 3.10.
+# Opción B: instalar desde el repositorio RVC original y usar CLI
+
+# ── Base de datos ─────────────────────────────────────────────────────────────
+# SQLite viene incluido con Python — no requiere instalación extra
+
+# ── Utilidades ───────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+rich==13.7.1              # Logs enriquecidos opcionales
+typer==0.12.3             # CLI helpers opcionales
+python-multipart==0.0.32
+deepfilternet==0.5.6
+muq

@@ -1,0 +1,47 @@
+# Entornos virtuales
+.venv*/
+venv*/
+env/
+__pycache__/
+*.pyc
+
+# Modelos pesados y directorios ignorados
+models/
+ace_step_repo/
+diffrhythm_repo/
+ace_step_repo_corrupted/
+
+# Cachés locales
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Archivos de la RAMDisk o generados locales temporales
+chronos_vfs/
+temp/
+outputs/
+*.wav
+*.mp3
+*.flac
+*.lrc
+*.log
+
+# Entornos IDE
+.vscode/
+.idea/
+
+# Variables de entorno
+.env
+.env.*
+
+# Logs y cachés adicionales
+logs/
+.cache/
+ffmpeg.exe
+
+ffprobe.exe
+
+
+ffmpeg.exe
+ffprobe.exe

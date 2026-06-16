@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno Local - IA Musical Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-compact-disc spin-slow"></i>
+                <h2>Suno<span>Local</span></h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-view="studio">
+                    <i class="fa-solid fa-music"></i> Estudio AI
+                </a>
+                <a href="#" class="nav-item" data-view="repair">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Reparar Audio IA
+                </a>
+                <a href="#" class="nav-item" data-view="remaster">
+                    <i class="fa-solid fa-sliders"></i> Remasterizar
+                </a>
+                <a href="#" class="nav-item" data-view="gallery">
+                    <i class="fa-solid fa-layer-group"></i> Galería
+                </a>
+            </nav>
+            <div class="global-settings" style="margin-bottom: 16px;">
+                <label for="global-voice-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-microphone-lines"></i> Modelo de Voz (RVC)</label>
+                <select id="global-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer;">
+                    <option value="">Cargando voces...</option>
+                </select>
+            </div>
+            <div class="status-indicator">
+                <div class="gpu-status">
+                    <span class="dot active"></span> GPU Lista
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- View: Studio -->
+            <section id="view-studio" class="view active">
+                <header class="view-header">
+                    <h1>Estudio AI</h1>
+                    <p>Genera una pista musical completa a partir de texto y letra, y clónala con tu modelo de voz.</p>
+                </header>
+                
+                <div class="card creation-card">
+                    <div class="input-group">
+                        <label for="topic-input">Tema de la Canción (Opcional, para generar letra con IA)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="topic-input" placeholder="Ej: Una canción triste sobre un robot enamorado" style="flex: 1;">
+                            <button id="generate-lyrics-btn" class="btn-secondary">
+                                <i class="fa-solid fa-pen-nib"></i> Generar Letra (IA)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="lyrics-input">Letra de la Canción (Español recomendado)</label>
+                        <textarea id="lyrics-input" rows="6" placeholder="Escribe tu letra aquí... 
+[Verse]
+Hola mundo..."></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="style-input">Estilo Musical (Géneros, instrumentos, ritmo)</label>
+                        <input type="text" id="style-input" placeholder="Ej: Pop latino, guitarra acústica, voz masculina suave, ritmo animado">
+                    </div>
+                    
+                    <button id="generate-btn" class="btn-primary" style="width: 100%; margin-top: 10px; padding: 15px; font-size: 1.1em;">
+                        <i class="fa-solid fa-bolt"></i> Generar Canción Completa
+                    </button>
+                </div>
+                
+                <div id="studio-status" class="job-status-container hidden">
+                    <h3>Progreso de Generación</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="studio-progress-fill"></div>
+                    </div>
+                    <div class="status-logs" id="studio-logs">
+                        <!-- Logs here -->
+                    </div>
+                    <div class="action-buttons hidden" id="studio-actions">
+                        <!-- Abort button removed / handled via status if needed -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- View: Repair -->
+            <section id="view-repair" class="view hidden">
+                <header class="view-header">
+                    <h1>Reparar Audio IA</h1>
+                    <p>Limpia voces robóticas, siseo y ruido ("shimmer") generado por IA antes de clonar.</p>
+                </header>
+
+                <div class="generate-card glass-panel">
+                    <div id="repair-dropzone" class="remaster-dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up remaster-drop-icon"></i>
+                        <p class="remaster-drop-text">Arrastra tu canción aquí</p>
+                        <p class="remaster-drop-sub">Se reconstruirá la voz manteniendo la instrumental</p>
+                        <label for="repair-file-input" class="btn-secondary" style="margin-top:1rem;cursor:pointer;">
+                            <i class="fa-solid fa-folder-open"></i> Seleccionar archivo
+                        </label>
+                        <input type="file" id="repair-file-input" accept="audio/*" style="display:none;">
+                    </div>
+
+                    <div id="repair-file-info" class="remaster-file-info hidden">
+                        <i class="fa-solid fa-file-audio"></i>
+                        <span id="repair-file-name">-</span>
+                        <span id="repair-file-size" class="badge">-</span>
+                        <button id="repair-clear-btn" class="btn-icon" title="Quitar archivo">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="options-row" style="justify-content:flex-end; margin-top:1rem;">
+                        <button id="btn-repair" class="btn-primary" disabled>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Limpiar Audio
+                        </button>
+                    </div>
+                </div>
+
+                <div id="repair-progress" class="pipeline-container glass-panel hidden">
+                    <h3>Estado del Proceso</h3>
+                    <div class="steps">
+                        <div class="step" data-step-rp="UVR5_SEPARATE">
+                            <div class="step-icon"><i class="fa-solid fa-scissors"></i></div>
+                            <div class="step-info">
+                                <h4>Separación</h4>
+                                <span>Extrayendo stems</span>
+                            </div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step-rp="DEEPFILTER_REPAIR">
+                            <div class="step-icon"><i class="fa-solid fa-microchip"></i></div>
+                            <div class="step-info">
+                                <h4>Purificación IA</h4>
+                                <span>DeepFilterNet</span>
+                            </div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step-rp="MIXING">
+                            <div class="step-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="step-info">
+                                <h4>Mezcla</h4>
+                                <span>Ensamblando audio</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="repair-logs" class="logs-container"></div>
+                </div>
+            </section>
+
+            <!-- View: Remaster -->
+            <section id="view-remaster" class="view hidden">
+                <header class="view-header">
+                    <h1>Ruta 2: Remasterizar Audio</h1>
+                    <p>Sube una pista existente para aplicarle tu modelo de voz (RVC) sin regenerar música.</p>
+                </header>
+
+                <div class="generate-card glass-panel">
+                    <!-- Drop Zone -->
+                    <div id="remaster-dropzone" class="remaster-dropzone">
+                        <i class="fa-solid fa-cloud-arrow-up remaster-drop-icon"></i>
+                        <p class="remaster-drop-text">Arrastra tu archivo de audio aquí</p>
+                        <p class="remaster-drop-sub">MP3, WAV, FLAC, OGG, M4A &mdash; hasta 200 MB</p>
+                        <label for="remaster-file-input" class="btn-secondary" style="margin-top:1rem;cursor:pointer;">
+                            <i class="fa-solid fa-folder-open"></i> Seleccionar archivo
+                        </label>
+                        <input type="file" id="remaster-file-input" accept="audio/*" style="display:none;">
+                    </div>
+
+                    <!-- Selected File Info -->
+                    <div id="remaster-file-info" class="remaster-file-info hidden">
+                        <i class="fa-solid fa-file-audio"></i>
+                        <span id="remaster-file-name">-</span>
+                        <span id="remaster-file-size" class="badge">-</span>
+                        <button id="remaster-clear-btn" class="btn-icon" title="Quitar archivo">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="options-row" style="justify-content:flex-end; margin-top:1rem;">
+                        <button id="btn-remaster" class="btn-primary" disabled>
+                            <i class="fa-solid fa-microphone-lines"></i> Aplicar Voz RVC
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Panel (shared style with Ruta 1) -->
+                <div id="remaster-progress" class="pipeline-container glass-panel hidden">
+                    <h3>Estado del Proceso</h3>
+                    <div class="steps">
+                        <div class="step" data-step-rm="UVR5_SEPARATE">
+                            <div class="step-icon"><i class="fa-solid fa-scissors"></i></div>
+                            <div class="step-info">
+                                <h4>Separación</h4>
+                                <span>Extrayendo stems (UVR5)</span>
+                            </div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step-rm="RVC_CLONE">
+                            <div class="step-icon"><i class="fa-solid fa-microphone"></i></div>
+                            <div class="step-info">
+                                <h4>Clonación</h4>
+                                <span>Aplicando voz (RVC)</span>
+                            </div>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step" data-step-rm="MIX_AND_MASTER">
+                            <div class="step-icon"><i class="fa-solid fa-sliders"></i></div>
+                            <div class="step-info">
+                                <h4>Mezcla</h4>
+                                <span>Exportando (FFmpeg)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="terminal-container" style="margin-top:1.5rem;">
+                        <div class="terminal-header">Logs del Remasterizador</div>
+                        <div id="remaster-terminal" class="terminal-output"></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- View: Gallery -->
+            <section id="view-gallery" class="view hidden">
+                <header class="view-header">
+                    <h1>Mi Galería</h1>
+                    <p>Tus creaciones musicales generadas localmente.</p>
+                </header>
+                
+                <div id="gallery-grid" class="gallery-grid">
+                    <!-- Gallery items will be injected here -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Global Player -->
+        <div class="global-player glass-panel">
+            <div class="track-info">
+                <div class="track-artwork"><i class="fa-solid fa-music"></i></div>
+                <div class="track-details">
+                    <h4 id="player-title">Ninguna pista</h4>
+                    <span id="player-artist">Suno Local</span>
+                </div>
+            </div>
+            <div class="player-controls">
+                <button class="ctrl-btn"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="btn-play-pause" class="ctrl-btn play-btn"><i class="fa-solid fa-play"></i></button>
+                <button class="ctrl-btn"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+            <div class="player-progress">
+                <span id="time-current">0:00</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="audio-progress"></div>
+                </div>
+                <span id="time-total">0:00</span>
+            </div>
+            <audio id="global-audio" src=""></audio>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
