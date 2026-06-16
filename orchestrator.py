@@ -362,12 +362,16 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     estimated_duration = min(180.0, max(20.0, (words * 0.4) + 10.0))
     log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
+    # Inyectar tags ocultos para forzar español nativo
+    hidden_tags = "[Clear Native Spanish Vocals, Perfect Spanish Pronunciation, Latin Accent]"
+    enhanced_prompt = f"{hidden_tags}\n{lyrics_str}"
+    
     # Preparar el comando
     wrapper_path = ace_repo / "ace_step_wrapper.py"
     
     cmd = [
         sys.executable, str(wrapper_path),
-        "--prompt", lyrics_str.replace('\n', '\\n'),
+        "--prompt", enhanced_prompt.replace('\n', '\\n'),
         "--lyrics", lyrics_str.replace('\n', '\\n'),
         "--duration", str(estimated_duration),
         "--output_path", str(output_wav.absolute()),
