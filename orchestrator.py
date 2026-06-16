@@ -358,12 +358,12 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     # Extraer variables para el wrapper
     lyrics_str = state.prompt 
     words = len(lyrics_str.split())
-    # Estimate: ~0.4s per word + 10s intro/outro buffer. Max limit 180s.
-    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 10.0))
+    # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 180s.
+    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 4.0))
     log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
-    # Inyectar tags ocultos para forzar español nativo
-    hidden_tags = "[Clear Native Spanish Vocals, Perfect Spanish Pronunciation, Latin Accent]"
+    # Inyectar tags ocultos para forzar español nativo y eliminar intro larga
+    hidden_tags = "[No Intro, Direct Vocal Start, Clear Native Spanish Vocals, Perfect Spanish Pronunciation, Latin Accent]"
     enhanced_prompt = f"{hidden_tags}\n{lyrics_str}"
     
     # Preparar el comando
@@ -1163,6 +1163,22 @@ class MusicGenerationPipeline:
 
             state.stage = "COMPLETED"
             log.info(f"[PIPELINE] Job {state.job_id} COMPLETADO. Output: {state.output_path}")
+
+            # ETAPA 6: Auditoria de Calidad Automatica
+            try:
+                log.info("[ETAPA 6] Ejecutando Auditor automático de calidad...")
+                analyzer_cmd = [
+                    sys.executable, "audio_analyzer.py",
+                    str(state.voz_propia_path),
+                    str(state.beat_path)
+                ]
+                analyzer_result = subprocess.run(analyzer_cmd, capture_output=True, text=True, check=True)
+                # Imprimir el reporte directo en los logs (para que lo vea el usuario en la web)
+                for line in analyzer_result.stdout.split('\n'):
+                    if line.strip():
+                        log.info(line.strip())
+            except Exception as e:
+                log.warning(f"[ETAPA 6] El auditor de calidad no pudo generar el reporte: {e}")
 
         except Exception as e:
             state.stage = "FAILED"
