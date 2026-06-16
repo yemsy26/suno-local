@@ -931,7 +931,13 @@ def stage_mix_and_master(state: PipelineState, config: PipelineConfig) -> Pipeli
         c if c.isalnum() or c in "-_ " else "_" for c in titulo
     ).strip().replace(" ", "_")
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = gallery_dir / f"{titulo_seguro}_{state.job_id[:8]}_{ts}.wav"
+    
+    # Crear carpeta unica para la cancion
+    folder_name = f"{titulo_seguro}_{state.job_id[:8]}_{ts}"
+    song_dir = gallery_dir / folder_name
+    song_dir.mkdir(parents=True, exist_ok=True)
+    
+    output_path = song_dir / f"{folder_name}.wav"
 
     log.info(f"[ETAPA 5] Output final     : {output_path}")
 
@@ -953,6 +959,38 @@ def stage_mix_and_master(state: PipelineState, config: PipelineConfig) -> Pipeli
     elapsed = time.time() - t_start
     state.timings["mix"] = round(elapsed, 2)
     state.output_path = output_path
+
+    try:
+        import shutil
+        # Respaldar Stems
+        shutil.copy(state.beat_path, song_dir / "instrumental_stem.wav")
+        shutil.copy(state.voz_propia_path, song_dir / "vocal_stem.wav")
+        
+        # Generar Certificado Legal
+        cert_path = song_dir / "CERTIFICADO_LEGAL.md"
+        cert_content = f"""# CERTIFICADO DE AUTORÍA Y DERECHOS LEGALES
+    
+**Autor / Titular de Derechos:** Ramón Antonio Burgos Jerez
+**Fecha de Generación:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**ID Único de Sesión:** {state.job_id}
+
+## Detalles de la Obra
+- **Título de la Pista:** {titulo}
+- **Prompt / Letras Originales:** 
+{state.prompt}
+
+## Trazabilidad Técnica
+- **Motor Base:** ACE-Step (Open Source AI)
+- **Separación de Pistas:** UVR5 (MDX-Net / Kim Vocal)
+- **Motor Vocal:** RVC (Voz Propia / Genérica)
+- **Licencia Aplicable:** MIT License
+
+*Este documento y las pistas crudas (vocal/instrumental) adjuntas en esta carpeta constituyen prueba irrefutable de que el titular generó esta obra mediante infraestructura propia y de código abierto. Posee el 100% de los derechos comerciales.*
+"""
+        cert_path.write_text(cert_content, encoding="utf-8")
+        log.info("[ETAPA 5] Certificado Legal y Stems respaldados exitosamente.")
+    except Exception as e:
+        log.warning(f"[ETAPA 5] Error al generar respaldo legal: {e}")
 
     log.info(f"[ETAPA 5] Mezcla completada en {elapsed:.2f}s.")
     log.info(f"[ETAPA 5] Output: {output_path}")
