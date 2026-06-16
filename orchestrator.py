@@ -356,7 +356,11 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
         return state
 
     # Extraer variables para el wrapper
-    lyrics_str = state.prompt # ACE-Step usa prompt y lyrics. Pasaremos lo mismo a ambos por simplicidad o podemos extraer etiquetas.
+    lyrics_str = state.prompt 
+    words = len(lyrics_str.split())
+    # Estimate: ~0.4s per word + 10s intro/outro buffer. Max limit 180s.
+    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 10.0))
+    log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
     # Preparar el comando
     wrapper_path = ace_repo / "ace_step_wrapper.py"
@@ -365,7 +369,7 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
         sys.executable, str(wrapper_path),
         "--prompt", lyrics_str.replace('\n', '\\n'),
         "--lyrics", lyrics_str.replace('\n', '\\n'),
-        "--duration", "180.0",
+        "--duration", str(estimated_duration),
         "--output_path", str(output_wav.absolute()),
         "--device_id", "0"
     ]
