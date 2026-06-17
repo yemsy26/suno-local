@@ -7,7 +7,7 @@
     "rvc_index_path": "models/rvc/voz_propia.index",
     "gallery_dir": "gallery",
     "temp_dir": "Z:/",
-    "audio_backend": "diffrhythm",
+    "audio_backend": "acestep",
     "rvc_pitch_shift": 0,
     "rvc_f0_method": "rmvpe",
     "mix_voice_volume_db": 6.0,
