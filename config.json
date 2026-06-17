@@ -6,7 +6,7 @@
     "rvc_model_path": "models/rvc/voz_propia.pth",
     "rvc_index_path": "models/rvc/voz_propia.index",
     "gallery_dir": "gallery",
-    "temp_dir": "C:/chronos_vfs",
+    "temp_dir": "Z:/",
     "audio_backend": "acestep",
     "rvc_pitch_shift": 0,
     "rvc_f0_method": "rmvpe",
