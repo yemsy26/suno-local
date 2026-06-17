@@ -359,6 +359,9 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     lyrics_str = state.prompt 
     words = len(lyrics_str.split())
     # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 180s.
+    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 4.0))
+    log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
+    
     # Inferir genero de la voz a partir del seed (1111=Femenina, 2222=Masculina)
     voz_tag = "Voz Femenina Clara"
     if state.synthetic_voice_seed and "222" in str(state.synthetic_voice_seed):
