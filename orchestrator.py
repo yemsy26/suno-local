@@ -1042,7 +1042,7 @@ def _run_ffmpeg_mix(
         f"[0:a]volume={beat_linear * 0.90:.4f}[beat];" # Bajar 10% al beat
         # Rack Vocal: Highpass, Presencia en 4000Hz (consonantes), Brillo en 8000Hz, Compresor vocal, Reverb
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=100,eq=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
+        f"highpass=f=100,equalizer=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
         f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
         f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz];"
         f"[beat][voz]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
