@@ -1035,15 +1035,18 @@ def _run_ffmpeg_mix(
     beat_linear  = 10 ** ((beat_vol_db  + 6.0) / 20)
     vocal_linear = 10 ** ((vocal_vol_db + 6.0) / 20)
 
+    # Usamos un LUFS más conservador para dar Headroom y evitar clipping digital final
+    safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
+
     filter_complex = (
-        f"[0:a]volume={beat_linear:.4f}[beat];"
-        # Rack de Mastering Vocal: Resample -> Stereo -> EQ (cortar graves, dar brillo) -> Compresion -> Reverb sutil -> Volumen
+        f"[0:a]volume={beat_linear * 0.85:.4f}[beat];" # Bajar 15% al beat para abrir espacio a la voz
+        # Rack Suavizado: EQ más limpio, Compresión gentil sin ganancia extrema, Reverb corta
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=120,highshelf=f=8000:g=4,"
-        f"acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=4,"
-        f"aecho=0.8:0.6:40:0.2,volume={vocal_linear:.4f}[voz];"
+        f"highpass=f=100,highshelf=f=8000:g=2,"
+        f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
+        f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz];"
         f"[beat][voz]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
-        f"[mixed]loudnorm=I={target_lufs}:TP=-1.0:LRA=11[out]"
+        f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
     )
     cmd = [
         "ffmpeg", "-y",

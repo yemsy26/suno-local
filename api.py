@@ -336,15 +336,16 @@ async def generate_lyrics_api(topic: str = Form(...)):
     import httpx
 
     prompt = (
-        f"Eres un compositor humano profesional y muy emocional. "
-        f"Escribe la letra de una cancion sobre: '{topic}'. "
-        "Usa una estructura clara con etiquetas como [Verse 1], [Chorus], [Verse 2], [Bridge], [Chorus]. "
-        "Escribe la letra en espanol, con buena rima y un flow musical natural. "
-        "REGLA DE ORO: NO menciones maquinas, robots, ni Inteligencia Artificial. "
-        "La letra debe sentirse 100% humana, organica, vivida y real. "
-        "REGLA 2: PROHIBIDO USAR SPANGLISH O PALABRAS EN INGLES. "
-        "Escribe EXCLUSIVAMENTE en espanol puro. "
-        "NO anadir explicaciones ni saludos, SOLO responde con la letra cruda."
+        f"Eres un compositor top de Billboard especializado en música urbana y pop moderno latino. "
+        f"Escribe la letra de una canción de alto impacto sobre: '{topic}'. "
+        "REGLAS ESTRUCTURALES CRÍTICAS:\n"
+        "1. Usa etiquetas exactas: [Verse 1], [Chorus], [Verse 2], [Chorus].\n"
+        "2. CADA línea debe ser CORTA (máximo 6 a 8 sílabas). NUNCA escribas oraciones largas, o el cantante se quedará sin aire.\n"
+        "3. Usa rimas perfectas (AABB o ABAB) para que tenga un ritmo muy marcado y pegadizo.\n"
+        "4. El [Chorus] debe tener palabras de gran impacto emocional y ser muy fácil de cantar.\n"
+        "5. Escribe EXCLUSIVAMENTE en español puro. PROHIBIDO spanglish o inglés.\n"
+        "6. NO menciones máquinas, robots, ni IA. Debe ser 100% humano y emocional.\n"
+        "7. SOLO devuelve la letra cruda, sin explicaciones ni introducciones."
     )
 
     config = load_config()
