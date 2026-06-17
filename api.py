@@ -358,8 +358,14 @@ async def generate_lyrics_api(topic: str = Form(...)):
                 json={"model": model, "prompt": prompt, "stream": False}
             )
             resp.raise_for_status()
-            data = resp.json()
-            return {"lyrics": data.get("response", "").strip()}
+            raw_lyrics = resp.json()["response"].strip()
+        
+        # Limpieza estricta: Eliminar introducciones del LLM (Ej. "Aquí está la letra:")
+        # Buscamos el primer '[' que indica la primera etiqueta (ej. [Verse 1])
+        if "[" in raw_lyrics:
+            raw_lyrics = raw_lyrics[raw_lyrics.find("["):]
+            
+        return {"lyrics": raw_lyrics}
     except Exception as e:
         orch_log.error(f"Error generando letra con Ollama: {e}")
         raise HTTPException(
