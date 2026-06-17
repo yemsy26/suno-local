@@ -339,15 +339,33 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     estimated_duration = min(210.0, max(180.0, (words * 0.4) + 60.0))
     log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
-    voz_tag = "Female Voice"
+    voz_tag = "Female Vocalist, Female Singer"
     if str(state.synthetic_voice_seed) in ["9012", "3456"]:
-        voz_tag = "Male Voice"
+        voz_tag = "Male Vocalist, Male Singer"
     elif str(state.synthetic_voice_seed) == "-1":
         import random
-        voz_tag = random.choice(["Male Voice", "Female Voice"])
+        voz_tag = random.choice(["Male Vocalist, Male Singer", "Female Vocalist, Female Singer"])
         state.synthetic_voice_seed = random.randint(1, 99999999)
         
-    enhanced_prompt = f"Pop song, {voz_tag}, Spanish lyrics"
+    style_tag = "Pop song"
+    import re
+    style_match = re.search(r'\[(.*?)\]', state.prompt)
+    if style_match:
+        user_style = style_match.group(1).strip()
+        style_tag = user_style
+        try:
+            import requests
+            prompt_ollama = f"Act as an expert music producer. The user requested this musical style: '{user_style}'. Provide 3 to 5 highly descriptive musical tags in English (comma separated) for an AI music generator. Do not include any other text."
+            res = requests.post("http://localhost:11434/api/generate", json={"model": "dolphin-mistral:latest", "prompt": prompt_ollama, "stream": False}, timeout=5)
+            if res.status_code == 200:
+                translation = res.json().get("response", "").strip()
+                if translation and len(translation) < 100:
+                    style_tag = translation
+                    log.info(f"[LLM] Estilo traducido/mejorado: {style_tag}")
+        except Exception:
+            pass
+
+    enhanced_prompt = f"{style_tag}, {voz_tag}, Spanish lyrics"
 
     
     wrapper_path = Path("ace_step_15_wrapper.py").absolute()
@@ -911,12 +929,12 @@ def _run_ffmpeg_mix(
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar sutilmente el beat
-        # Rack Vocal: Highpass muy suave, ecualizaciÃ³n cÃ¡lida, compresiÃ³n transparente (sin eco artificial)
+        f"[0:a]volume={beat_linear * 0.90:.4f},afade=t=in:ss=0:d=2.5[beat_raw];" # Bajar sutilmente el beat y fade-in
+        # Rack Vocal: Highpass muy suave, ecualización cálida, compresión transparente, fade-in
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
         f"highpass=f=90,equalizer=f=3000:width_type=q:width=1:g=1.5,highshelf=f=8000:g=1,"
         f"acompressor=threshold=-10dB:ratio=2:attack=15:release=150:makeup=1.5,"
-        f"volume={vocal_linear:.4f}[voz_fx];"
+        f"volume={vocal_linear:.4f},afade=t=in:ss=0:d=2.5[voz_fx];"
         # Mezclar Beat y Voz de forma estÃ¡tica (sin ducking ni bajadas de volumen)
         f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
         # NormalizaciÃ³n final transparente (sin pegamento agresivo)
