@@ -1039,19 +1039,16 @@ def _run_ffmpeg_mix(
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]aformat=channel_layouts=stereo,volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar 10% al beat y forzar stereo
+        f"[0:a]volume={beat_linear * 0.85:.4f}[beat_raw];" # Bajar 15% al beat para dar más espacio a la voz
         # Rack Vocal: Highpass, Presencia en 4000Hz (consonantes), Brillo en 8000Hz, Compresor vocal, Reverb
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
         f"highpass=f=100,equalizer=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
         f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
         f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz_fx];"
-        f"[voz_fx]asplit=2[voz_mix][voz_sc_raw];"
-        f"[voz_sc_raw]aformat=channel_layouts=stereo[voz_sc];" # Forzar metadata stereo perdida por asplit
-        # Sidechain real: el beat se comprime automáticamente cada vez que la voz suena
-        f"[beat_raw][voz_sc]sidechaincompress=threshold=-15dB:ratio=4:attack=10:release=150[beat];"
-        f"[beat][voz_mix]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
-        # Glue Compressor general para pegar ambos unidos, luego Normalizacion
-        f"[mixed_raw]acompressor=threshold=-14dB:ratio=2.5:attack=15:release=150:makeup=1.5[mixed];"
+        # Mezclar Beat y Voz
+        f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
+        # Glue Compressor Agresivo: Actúa como sidechain falso empujando el beat cuando entra la voz
+        f"[mixed_raw]acompressor=threshold=-20dB:ratio=4:attack=5:release=100:makeup=2.5[mixed];"
         f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
     )
     cmd = [
