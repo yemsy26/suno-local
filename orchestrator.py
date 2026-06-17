@@ -340,8 +340,12 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
     voz_tag = "Female Voice"
-    if state.synthetic_voice_seed and "222" in str(state.synthetic_voice_seed):
+    if str(state.synthetic_voice_seed) in ["9012", "3456"]:
         voz_tag = "Male Voice"
+    elif str(state.synthetic_voice_seed) == "-1":
+        import random
+        voz_tag = random.choice(["Male Voice", "Female Voice"])
+        state.synthetic_voice_seed = random.randint(1, 99999999)
         
     enhanced_prompt = f"Pop song, {voz_tag}, Spanish lyrics"
 
@@ -1267,5 +1271,6 @@ if __name__ == "__main__":
     )
 
     sys.exit(0 if final_state.stage == "COMPLETED" else 1)
+
 
 
