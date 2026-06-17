@@ -343,7 +343,7 @@ async def generate_lyrics_api(topic: str = Form(...)):
         "2. LONGITUD: Escribe aproximadamente 250 palabras para que la canción dure 3 minutos y medio completos.\n"
         "3. CADA línea debe ser CORTA (máximo 6 a 8 sílabas). NUNCA escribas oraciones largas.\n"
         "4. Usa rimas perfectas (AABB o ABAB) para que tenga un ritmo muy marcado.\n"
-        "5. PROHIBIDO usar onomatopeyas o muletillas en inglés (Wao, Ohh, Ahh, Yeah). Usa 100% diccionario español puro.\n"
+        "5. ESTRICTAMENTE PROHIBIDO usar cualquier palabra en inglés (ej: baby, flow, party, love, DJ) o muletillas anglosajonas (Wao, Ohh, Yeah). El modelo acústico colapsará si detecta inglés. Usa 100% español puro.\n"
         "6. NO menciones máquinas, robots, ni IA. Debe ser 100% humano y emocional.\n"
         "7. SOLO devuelve la letra cruda, sin explicaciones ni introducciones."
     )
