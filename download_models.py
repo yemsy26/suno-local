@@ -3,7 +3,6 @@ download_models.py
 # ═══════════════════════════════════════════════════════════════════
 Descarga automática de modelos base para Suno Local
   - MDX-Net_Inst_HQ_3.onnx  → models/uvr5/
-  - DiffRhythm 2             → models/diffrhythm2/
   - Carpeta RVC              → models/rvc/  (vacía, listo para pegar .pth)
 # ═══════════════════════════════════════════════════════════════════
 """
@@ -181,60 +180,7 @@ def download_uvr5():
     return False
 
 
-def download_diffrhythm():
-    """Descarga los pesos de DiffRhythm 2 desde HuggingFace Hub."""
-    print("\n" + "-" * 60)
-    print("  [2/3] MODELO DiffRhythm 2")
-    print("-" * 60)
 
-    if not ensure_huggingface_hub():
-        return False
-
-    from huggingface_hub import snapshot_download
-
-    diffrhythm_dir = Path("models/diffrhythm2")
-    diffrhythm_dir.mkdir(parents=True, exist_ok=True)
-
-    # Verificar si ya esta descargado
-    existing = list(diffrhythm_dir.glob("*.safetensors")) + list(diffrhythm_dir.glob("*.bin"))
-    if existing:
-        print(f"  [OK] DiffRhythm ya descargado ({len(existing)} pesos encontrados). Saltando.")
-        return True
-
-    hf_token = os.environ.get("HF_TOKEN")
-    if hf_token:
-        print("  [*] Usando token HF_TOKEN para autenticacion.")
-
-    # Repos en orden de preferencia (DiffRhythm2 > DiffRhythm-full)
-    candidates = [
-        ("ASLP-lab/DiffRhythm2",    "DiffRhythm 2 (nueva version)"),
-        ("ASLP-lab/DiffRhythm-full", "DiffRhythm (version original)"),
-    ]
-
-    for repo_id, label in candidates:
-        print(f"  [*] Intentando sincronizar: {label}  ({repo_id})")
-        print(f"  [*] Destino: {diffrhythm_dir.resolve()}")
-        print(f"  [*] (Puede tardar varios minutos...)")
-        try:
-            snapshot_download(
-                repo_id=repo_id,
-                local_dir=str(diffrhythm_dir),
-                token=hf_token,
-                ignore_patterns=["*.msgpack", "*.h5", "*.tflite", "flax_model*"],
-            )
-            print(f"  [OK] {label} sincronizado en: {diffrhythm_dir.resolve()}")
-            return True
-        except Exception as e:
-            print(f"  [!] {repo_id}: {str(e)[:200]}")
-
-    print("  [X] No se pudo descargar DiffRhythm automaticamente.")
-    print("  Para descarga manual con token HF:")
-    print("    1. Crea cuenta en https://huggingface.co y acepta los terminos del modelo")
-    print("    2. Genera un token en https://huggingface.co/settings/tokens")
-    print("    3. Ejecuta con token:")
-    print("       set HF_TOKEN=hf_xxxx...")
-    print("       .venv_py311\\Scripts\\python.exe download_models.py")
-    return False
 
 
 def prepare_rvc():
@@ -289,7 +235,6 @@ def main():
 
     results = {
         "UVR5 MDX-Net":   download_uvr5(),
-        "DiffRhythm 2":   download_diffrhythm(),
         "RVC (carpetas)": prepare_rvc(),
     }
 
@@ -313,4 +258,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

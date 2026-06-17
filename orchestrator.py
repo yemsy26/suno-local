@@ -112,7 +112,7 @@ class PipelineConfig:
     """Configuracion global del pipeline."""
     # Modelos
     ollama_model: str           = "llama3"
-    diffrhythm_model_path: str  = "models/diffrhythm2"
+    diffrhythm_model_path: str  = ""
     yue_model_path: str         = "models/yue"
     uvr5_model_path: str        = "models/uvr5/MDX-Net_Inst_HQ_3.onnx"
     rvc_model_path: str         = "models/rvc/voz_propia.pth"
@@ -123,7 +123,7 @@ class PipelineConfig:
     temp_dir: str               = "temp"
 
     # Parametros de generacion
-    audio_backend: str          = "diffrhythm"   # "diffrhythm" | "yue"
+    audio_backend: str          = "acestep"
     rvc_pitch_shift: int        = 0
     rvc_f0_method: str          = "rmvpe"
     mix_voice_volume_db: float  = -3.5
@@ -299,37 +299,7 @@ def checkpoint(
 # ETAPA 1: GENERACION MUSICAL
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-def _spanish_to_ipa(text: str) -> str:
-    """Convierte texto en espanol a tokens IPA aproximados para DiffRhythm."""
-    text = text.lower()
-    text = text.replace('ll', 'j').replace('ch', 't s').replace('qu', 'k').replace('rr', 'r r')
-    text = text.replace('gue', 'g e').replace('gui', 'g i')
-    text = text.replace('ce', 's e').replace('ci', 's i')
 
-    mapping = {
-        'a': 'a', 'b': 'b', 'c': 'k', 'd': 'd', 'e': 'e', 'f': 'f',
-        'g': 'g', 'h': '', 'i': 'i', 'j': 'x', 'k': 'k', 'l': 'l',
-        'm': 'm', 'n': 'n', 'o': 'o', 'p': 'p', 'q': 'k',
-        'r': 'r', 's': 's', 't': 't', 'u': 'u', 'v': 'b', 'w': 'w',
-        'x': 'k s', 'y': 'j', 'z': 's',
-        'n': 'n j',
-        'a': 'a', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u', 'u': 'u',
-        ' ': '_', ',': ',', '.': '.', '?': '?', '!': '!',
-    }
-
-    tokens = []
-    for char in text:
-        mapped = mapping.get(char)
-        if mapped is not None:
-            if mapped:
-                tokens.append(mapped)
-        elif char.isalnum():
-            tokens.append(char)
-
-    res = " ".join(tokens)
-    while "_ _" in res:
-        res = res.replace("_ _", "_")
-    return res
 
 
 def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> PipelineState:
@@ -413,113 +383,7 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     return state
 
 
-def stage_diffrhythm_generate(state: PipelineState, config: PipelineConfig) -> PipelineState:
-    """Genera audio musical con DiffRhythm usando letras en formato LRC+IPA."""
-    log.info("=" * 72)
-    log.info("[ETAPA 1] Iniciando Generacion Musical con DiffRhythm...")
-    state.stage = "DIFFRHYTHM_GENERATE"
-    _clear_vram("INICIO ETAPA_DIFFRHYTHM")
-    t0 = time.time()
 
-    temp_dir = Path(config.temp_dir) / state.job_id
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    # Preparar letras en formato LRC con IPA
-    lyrics = state.prompt
-    lrc_lines = []
-    current_time = 0.0
-    for line in lyrics.split('\n'):
-        line = line.strip()
-        if not line or line.startswith('['):
-            continue
-        m = int(current_time // 60)
-        s = current_time % 60
-        ipa_tokens = _spanish_to_ipa(line)
-        lrc_lines.append(f"[{m:02d}:{s:05.2f}] [IPA] {ipa_tokens}")
-        current_time += 4.0
-
-    lrc_content = "\n".join(lrc_lines)
-    lrc_path = temp_dir / "lyrics.lrc"
-    lrc_path.write_text(lrc_content, encoding='utf-8')
-    log.info(f"[DiffRhythm] Letras LRC generadas en {lrc_path}")
-
-    output_dir = temp_dir / "diffrhythm_out"
-    output_dir.mkdir(exist_ok=True)
-
-    try:
-        log.info("[DiffRhythm] Ejecutando inferencia (95 segundos)...")
-        cmd = [
-            sys.executable,
-            "infer/infer.py",
-            "--lrc-path", str(lrc_path.absolute()),
-            "--output-dir", str(output_dir.absolute()),
-            "--audio-length", "95",
-        ]
-
-        result = subprocess.run(cmd, cwd="diffrhythm_repo", capture_output=True, text=True)
-
-        if result.returncode != 0:
-            log.error(f"[DiffRhythm] Error en ejecucion:\n{result.stderr}")
-            state.stage = "FAILED"
-            return state
-
-        output_wav = output_dir / "output.wav"
-        if output_wav.exists():
-            import shutil
-            final_wav = temp_dir / "yue_generated.wav"
-            shutil.copy(output_wav, final_wav)
-            state.maqueta_path = final_wav
-            log.info(f"[ETAPA 1] DiffRhythm completado en {time.time()-t0:.2f}s")
-        else:
-            raise FileNotFoundError("DiffRhythm no genero el archivo output.wav")
-
-    except Exception as e:
-        log.error(f"[ETAPA 1] Falla en DiffRhythm: {e}")
-        state.stage = "FAILED"
-
-    _clear_vram("FIN ETAPA_DIFFRHYTHM")
-    return state
-
-
-def stage_yue_generate(state: PipelineState, config: PipelineConfig) -> PipelineState:
-    """Genera audio musical con YuE (modo simulacion/stub para desarrollo)."""
-    log.info("=" * 72)
-    log.info("[ETAPA 1] Iniciando Generacion Musical con YuE...")
-    state.stage = "YUE_GENERATE"
-    _clear_vram("INICIO ETAPA_YUE")
-    t0 = time.time()
-
-    temp_dir = Path(config.temp_dir) / state.job_id
-    temp_dir.mkdir(parents=True, exist_ok=True)
-    output_wav = temp_dir / "yue_generated.wav"
-
-    try:
-        log.info("[YuE] Construyendo prompt para el modelo...")
-        log.info(f"[YuE] Letras: {state.prompt[:50]}...")
-        log.info("[YuE] Simulando generacion...")
-
-        import shutil
-        simulated_source = Path("test_svs.wav")
-        if simulated_source.exists():
-            shutil.copy(simulated_source, output_wav)
-        else:
-            import wave
-            import os
-            with wave.open(str(output_wav), 'wb') as wf:
-                wf.setnchannels(2)
-                wf.setsampwidth(2)
-                wf.setframerate(44100)
-                wf.writeframes(os.urandom(44100 * 4 * 5))  # 5 segundos de ruido blanco
-
-        state.maqueta_path = output_wav
-        log.info(f"[ETAPA 1] YuE generacion completada en {time.time()-t0:.2f}s")
-
-    except Exception as e:
-        log.error(f"[ETAPA 1] Falla en YuE: {e}")
-        state.stage = "FAILED"
-
-    _clear_vram("FIN ETAPA_YUE")
-    return state
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1184,12 +1048,7 @@ class MusicGenerationPipeline:
         try:
             # ETAPA 1: Generacion Musical
             backend = self.config.audio_backend
-            if backend == "acestep":
-                state = stage_acestep_generate(state, self.config)
-            elif backend == "diffrhythm":
-                state = stage_diffrhythm_generate(state, self.config)
-            else:
-                state = stage_yue_generate(state, self.config)
+            state = stage_acestep_generate(state, self.config)
             if state.stage == "FAILED":
                 return state
 
@@ -1408,4 +1267,5 @@ if __name__ == "__main__":
     )
 
     sys.exit(0 if final_state.stage == "COMPLETED" else 1)
+
 
