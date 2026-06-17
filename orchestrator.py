@@ -1039,13 +1039,14 @@ def _run_ffmpeg_mix(
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar 10% al beat
+        f"[0:a]aformat=channel_layouts=stereo,volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar 10% al beat y forzar stereo
         # Rack Vocal: Highpass, Presencia en 4000Hz (consonantes), Brillo en 8000Hz, Compresor vocal, Reverb
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
         f"highpass=f=100,equalizer=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
         f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
         f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz_fx];"
-        f"[voz_fx]asplit=2[voz_mix][voz_sc];"
+        f"[voz_fx]asplit=2[voz_mix][voz_sc_raw];"
+        f"[voz_sc_raw]aformat=channel_layouts=stereo[voz_sc];" # Forzar metadata stereo perdida por asplit
         # Sidechain real: el beat se comprime automáticamente cada vez que la voz suena
         f"[beat_raw][voz_sc]sidechaincompress=threshold=-15dB:ratio=4:attack=10:release=150[beat];"
         f"[beat][voz_mix]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
