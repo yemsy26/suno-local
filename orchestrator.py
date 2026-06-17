@@ -1039,16 +1039,15 @@ def _run_ffmpeg_mix(
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]volume={beat_linear * 0.85:.4f}[beat_raw];" # Bajar 15% al beat para dar más espacio a la voz
-        # Rack Vocal: Highpass, Presencia en 4000Hz (consonantes), Brillo en 8000Hz, Compresor vocal, Reverb
+        f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar sutilmente el beat
+        # Rack Vocal: Highpass suave, Presencia vocal en 3500Hz, Brillo suave, Compresión natural, Reverb suave
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=100,equalizer=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
-        f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
-        f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz_fx];"
-        # Mezclar Beat y Voz
-        f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
-        # Glue Compressor Agresivo: Actúa como sidechain falso empujando el beat cuando entra la voz
-        f"[mixed_raw]acompressor=threshold=-20dB:ratio=4:attack=5:release=100:makeup=2.5[mixed];"
+        f"highpass=f=120,equalizer=f=3500:width_type=q:width=1:g=3,highshelf=f=8000:g=1.5,"
+        f"acompressor=threshold=-15dB:ratio=2.5:attack=10:release=100:makeup=2,"
+        f"aecho=0.8:0.4:25:0.1,volume={vocal_linear:.4f}[voz_fx];"
+        # Mezclar Beat y Voz de forma estática (sin ducking ni bajadas de volumen)
+        f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
+        # Normalización final transparente (sin pegamento agresivo)
         f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
     )
     cmd = [
