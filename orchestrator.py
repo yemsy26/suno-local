@@ -1040,11 +1040,11 @@ def _run_ffmpeg_mix(
 
     filter_complex = (
         f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar sutilmente el beat
-        # Rack Vocal: Highpass suave, Presencia vocal en 3500Hz, Brillo suave, Compresión natural, Reverb suave
+        # Rack Vocal: Highpass muy suave, ecualización cálida, compresión transparente (sin eco artificial)
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=120,equalizer=f=3500:width_type=q:width=1:g=3,highshelf=f=8000:g=1.5,"
-        f"acompressor=threshold=-15dB:ratio=2.5:attack=10:release=100:makeup=2,"
-        f"aecho=0.8:0.4:25:0.1,volume={vocal_linear:.4f}[voz_fx];"
+        f"highpass=f=90,equalizer=f=3000:width_type=q:width=1:g=1.5,highshelf=f=8000:g=1,"
+        f"acompressor=threshold=-10dB:ratio=2:attack=15:release=150:makeup=1.5,"
+        f"volume={vocal_linear:.4f}[voz_fx];"
         # Mezclar Beat y Voz de forma estática (sin ducking ni bajadas de volumen)
         f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
         # Normalización final transparente (sin pegamento agresivo)

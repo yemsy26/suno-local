@@ -340,15 +340,18 @@ async def generate_lyrics_api(topic: str = Form(...)):
         f"Escribe la letra de una canción sobre: '{topic}'. "
         "REGLAS ESTRUCTURALES CRÍTICAS:\n"
         "1. Usa etiquetas exactas: [Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Chorus].\n"
-        "2. CADA LÍNEA DEBE RIMAR PERFECTAMENTE con la siguiente. Es obligatorio usar rimas AABB.\n"
+        "   ATENCIÓN: Cada etiqueta debe ir obligatoriamente en una línea vacía SOLA, sin texto al lado.\n"
+        "2. NUNCA uses corchetes [ ] para nada más. NO pongas [Canción] ni [Autor].\n"
+        "3. Usa comas (,) frecuentemente para marcar pausas naturales donde el cantante debe respirar.\n"
+        "4. CADA LÍNEA DEBE RIMAR PERFECTAMENTE con la siguiente. Es obligatorio usar rimas AABB.\n"
         "   Ejemplo obligatorio de rima AABB:\n"
         "   Línea 1 termina en 'corazón' (A)\n"
         "   Línea 2 termina en 'razón' (A)\n"
         "   Línea 3 termina en 'dolor' (B)\n"
         "   Línea 4 termina en 'amor' (B)\n"
-        "3. Escribe líneas muy cortas (4 a 7 palabras por línea). Si escribes líneas largas, la canción sonará mal.\n"
-        "4. ESTRICTAMENTE PROHIBIDO usar cualquier palabra en inglés (ej: baby, flow, party, love, DJ) o muletillas anglosajonas (Wao, Ohh, Yeah). El modelo acústico colapsará si detecta inglés. Usa 100% español puro.\n"
-        "5. SOLO devuelve la letra cruda, sin explicaciones ni introducciones."
+        "5. Escribe líneas muy cortas (4 a 7 palabras por línea). Si escribes líneas largas, la canción sonará mal.\n"
+        "6. ESTRICTAMENTE PROHIBIDO usar cualquier palabra en inglés (ej: baby, flow, party, love, DJ) o muletillas anglosajonas (Wao, Ohh, Yeah). El modelo acústico colapsará si detecta inglés. Usa 100% español puro.\n"
+        "7. SOLO devuelve la letra cruda, sin explicaciones ni introducciones."
     )
 
     config = load_config()
