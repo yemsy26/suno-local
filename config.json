@@ -1,5 +1,5 @@
 {
-    "ollama_model": "llama3",
+    "ollama_model": "dolphin-mistral:latest",
     "acestep_model_path": "models/acestep",
     "acestep_audio_duration": 95.0,
     "uvr5_model_path": "models/uvr5/Kim_Vocal_2.onnx",

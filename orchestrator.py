@@ -30,9 +30,9 @@ os.environ.setdefault(
     r"C:\Program Files\eSpeak NG\libespeak-ng.dll"
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # FFMPEG path injection
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _inject_ffmpeg_path() -> None:
     local_app_data = os.environ.get("LOCALAPPDATA", "")
@@ -49,9 +49,9 @@ def _inject_ffmpeg_path() -> None:
 
 _inject_ffmpeg_path()
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # LOGGING
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
@@ -103,9 +103,9 @@ def _build_logger(name: str) -> logging.Logger:
 
 log = _build_logger("orchestrator")
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # DATACLASSES
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @dataclass
 class PipelineConfig:
@@ -181,9 +181,9 @@ class PipelineState:
         logger.info(div)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # VRAM UTILITIES
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _vram_mb() -> float:
     if torch.cuda.is_available():
@@ -227,9 +227,9 @@ def purge_vram(model_ref: Any = None, context: str = "") -> None:
     _log_vram(f"POST-PURGE [{context}]")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # CHECKPOINT
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def checkpoint(
     state: PipelineState,
@@ -295,9 +295,9 @@ def checkpoint(
         time.sleep(0.2)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ETAPA 1: GENERACION MUSICAL
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _spanish_to_ipa(text: str) -> str:
     """Convierte texto en espanol a tokens IPA aproximados para DiffRhythm."""
@@ -333,75 +333,78 @@ def _spanish_to_ipa(text: str) -> str:
 
 
 def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> PipelineState:
-    """
-    Etapa 1: Generación de música con ACE-Step (Nativo Español)
-    """
     state.stage = "ACESTEP_GENERATE"
-    log.info("━" * 72)
-    log.info("[ETAPA 1] Iniciando Generación Musical con ACE-Step...")
+    log.info("?" * 72)
+    log.info("[ETAPA 1] Iniciando Generación Musical con ACE-Step 1.5...")
     _clear_vram("INICIO ETAPA_ACESTEP")
 
     t0 = time.time()
     
-    # Usar Chronos-VFS para no tocar el disco
     temp_dir = Path(config.temp_dir) / state.job_id
     temp_dir.mkdir(parents=True, exist_ok=True)
     output_wav = temp_dir / "yue_generated.wav"
 
-    ace_repo = Path("ace_step_repo").absolute()
+    ace_repo = Path("ace_step_1.5_repo").absolute()
     if not ace_repo.exists():
-        log.error(f"[ACE-Step] No se encontró el repositorio en {ace_repo}")
+        log.error(f"[ACE-Step 1.5] No se encontró el repositorio en {ace_repo}")
         state.stage = "FAILED"
-        state.errors.append("ace_step_repo no encontrado")
+        state.errors.append("ace_step_1.5_repo no encontrado")
         return state
 
-    # Extraer variables para el wrapper
     lyrics_str = state.prompt 
-    words = len(lyrics_str.split())
-    # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 210s (3.5 mins).
-    estimated_duration = min(210.0, max(20.0, (words * 0.4) + 4.0))
-    log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
-    # Inferir genero de la voz a partir del seed (1111=Femenina, 2222=Masculina)
+    # Asegurar una intro instrumental para que la voz no choque al inicio con la pista
+    if "[intro]" not in lyrics_str.lower() and "(instrumental intro)" not in lyrics_str.lower():
+        if lyrics_str.startswith("["):
+            parts = lyrics_str.split("]\n", 1)
+            if len(parts) == 2 and not parts[0].lower().startswith("[verse") and not parts[0].lower().startswith("[chorus"):
+                lyrics_str = f"{parts[0]}]\n\n[Intro]\n(instrumental intro)\n\n{parts[1]}"
+            else:
+                lyrics_str = "[Intro]\n(instrumental intro)\n\n" + lyrics_str
+        else:
+            lyrics_str = "[Intro]\n(instrumental intro)\n\n" + lyrics_str
+
+    words = len(lyrics_str.split())
+    estimated_duration = min(210.0, max(20.0, (words * 0.4) + 4.0))
+    log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
+    
     voz_tag = "Female Voice"
     if state.synthetic_voice_seed and "222" in str(state.synthetic_voice_seed):
         voz_tag = "Male Voice"
         
-    # Inyectar tags ocultos para forzar español nativo y evitar confusiones del LangSegment
-    hidden_tags = f"[es, {voz_tag}, Sin Intro]"
-    enhanced_prompt = f"{hidden_tags}\n{lyrics_str}"
+    enhanced_prompt = f"Pop song, {voz_tag}, Spanish lyrics, high quality vocal recording, clear vocals, vocals upfront, studio recording"
+
     
-    # Preparar el comando
-    wrapper_path = ace_repo / "ace_step_wrapper.py"
+    wrapper_path = Path("ace_step_15_wrapper.py").absolute()
     
     cmd = [
         sys.executable, str(wrapper_path),
-        "--prompt", enhanced_prompt.replace('\n', '\\n'),
-        "--lyrics", lyrics_str.replace('\n', '\\n'),
+        "--prompt", enhanced_prompt,
+        "--lyrics", lyrics_str.replace('\n', '\n'),
         "--duration", str(estimated_duration),
         "--output_path", str(output_wav.absolute()),
         "--device_id", "0",
         "--seed", str(state.synthetic_voice_seed)
     ]
     
-    log.info(f"[ACE-Step] Ejecutando inferencia en {ace_repo}...")
+    log.info(f"[ACE-Step 1.5] Ejecutando inferencia con wrapper local...")
     
     try:
-        result = subprocess.run(cmd, cwd=str(ace_repo), capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
-            log.error(f"[ACE-Step] Error en ejecución:\n{result.stderr}")
+            log.error(f"[ACE-Step 1.5] Error en ejecución:\n{result.stderr}")
             state.stage = "FAILED"
             state.errors.append(f"ACE-Step falló: {result.stderr[-200:]}")
             return state
             
-        log.info(f"[ACE-Step] Generación exitosa: {output_wav}")
+        log.info(f"[ACE-Step 1.5] Generación exitosa: {output_wav}")
         state.maqueta_path = output_wav
         
         t1 = time.time()
         log.info(f"[ETAPA 1] ACE-Step completado en {t1 - t0:.1f}s")
         
     except Exception as e:
-        log.error(f"[ACE-Step] Excepción: {e}")
+        log.error(f"[ACE-Step] ExcepciÃ³n: {e}")
         state.stage = "FAILED"
         state.errors.append(str(e))
         return state
@@ -518,9 +521,9 @@ def stage_yue_generate(state: PipelineState, config: PipelineConfig) -> Pipeline
     return state
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ETAPA 3: UVR5 - SEPARACION DE STEMS
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def stage_uvr5_remaster(state: PipelineState, config: PipelineConfig) -> PipelineState:
     """
@@ -706,9 +709,9 @@ def _rename_uvr5_outputs(
         log.debug(f"[UVR5] Renombrado: {vocal_candidates[0].name} -> {output_vocals.name}")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ETAPA DEEPFILTER: Limpieza de voz
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def stage_deepfilter_repair(state: PipelineState, config: PipelineConfig) -> PipelineState:
     """Limpia la voz generica de ruidos y artefactos usando DeepFilterNet."""
@@ -747,9 +750,9 @@ def stage_deepfilter_repair(state: PipelineState, config: PipelineConfig) -> Pip
     return state
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ETAPA 4: RVC - Clonacion de voz
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def stage_rvc_clone(state: PipelineState, config: PipelineConfig) -> PipelineState:
     """Aplica RVC sobre voz_generica.wav para generar voz_propia.wav."""
@@ -838,7 +841,7 @@ def _run_rvc_cli(
 
     if not Path(rvc_bin).exists():
         log.warning(f"[RVC] rvc-cli.exe NO ENCONTRADO en {rvc_bin}.")
-        log.warning("[RVC] MODO SIMULACIÓN: Se copiará el audio original (passthrough).")
+        log.warning("[RVC] MODO SIMULACIÃ“N: Se copiarÃ¡ el audio original (passthrough).")
         import shutil
         shutil.copy(input_path, output_path)
         return
@@ -893,9 +896,9 @@ def _run_rvc_cli(
     log.debug(f"[RVC] STDOUT:\n{result.stdout[-1000:]}")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ETAPA 5: FFmpeg - Mezcla y masterizacion
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def stage_mix_and_master(state: PipelineState, config: PipelineConfig) -> PipelineState:
     """
@@ -973,24 +976,24 @@ def stage_mix_and_master(state: PipelineState, config: PipelineConfig) -> Pipeli
         
         # Generar Certificado Legal
         cert_path = song_dir / "CERTIFICADO_LEGAL.md"
-        cert_content = f"""# CERTIFICADO DE AUTORÍA Y DERECHOS LEGALES
+        cert_content = f"""# CERTIFICADO DE AUTORÃA Y DERECHOS LEGALES
     
-**Autor / Titular de Derechos:** Ramón Antonio Burgos Jerez
-**Fecha de Generación:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-**ID Único de Sesión:** {state.job_id}
+**Autor / Titular de Derechos:** RamÃ³n Antonio Burgos Jerez
+**Fecha de GeneraciÃ³n:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**ID Ãšnico de SesiÃ³n:** {state.job_id}
 
 ## Detalles de la Obra
-- **Título de la Pista:** {titulo}
+- **TÃ­tulo de la Pista:** {titulo}
 - **Prompt / Letras Originales:** 
 {state.prompt}
 
-## Trazabilidad Técnica
+## Trazabilidad TÃ©cnica
 - **Motor Base:** ACE-Step (Open Source AI)
-- **Separación de Pistas:** UVR5 (MDX-Net / Kim Vocal)
-- **Motor Vocal:** RVC (Voz Propia / Genérica)
+- **SeparaciÃ³n de Pistas:** UVR5 (MDX-Net / Kim Vocal)
+- **Motor Vocal:** RVC (Voz Propia / GenÃ©rica)
 - **Licencia Aplicable:** MIT License
 
-*Este documento y las pistas crudas (vocal/instrumental) adjuntas en esta carpeta constituyen prueba irrefutable de que el titular generó esta obra mediante infraestructura propia y de código abierto. Posee el 100% de los derechos comerciales.*
+*Este documento y las pistas crudas (vocal/instrumental) adjuntas en esta carpeta constituyen prueba irrefutable de que el titular generÃ³ esta obra mediante infraestructura propia y de cÃ³digo abierto. Posee el 100% de los derechos comerciales.*
 """
         cert_path.write_text(cert_content, encoding="utf-8")
         log.info("[ETAPA 5] Certificado Legal y Stems respaldados exitosamente.")
@@ -1035,19 +1038,19 @@ def _run_ffmpeg_mix(
     beat_linear  = 10 ** ((beat_vol_db  + 6.0) / 20)
     vocal_linear = 10 ** ((vocal_vol_db + 6.0) / 20)
 
-    # Usamos un LUFS más conservador para dar Headroom y evitar clipping digital final
+    # Usamos un LUFS mÃ¡s conservador para dar Headroom y evitar clipping digital final
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
         f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar sutilmente el beat
-        # Rack Vocal: Highpass muy suave, ecualización cálida, compresión transparente (sin eco artificial)
+        # Rack Vocal: Highpass muy suave, ecualizaciÃ³n cÃ¡lida, compresiÃ³n transparente (sin eco artificial)
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
         f"highpass=f=90,equalizer=f=3000:width_type=q:width=1:g=1.5,highshelf=f=8000:g=1,"
         f"acompressor=threshold=-10dB:ratio=2:attack=15:release=150:makeup=1.5,"
         f"volume={vocal_linear:.4f}[voz_fx];"
-        # Mezclar Beat y Voz de forma estática (sin ducking ni bajadas de volumen)
+        # Mezclar Beat y Voz de forma estÃ¡tica (sin ducking ni bajadas de volumen)
         f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
-        # Normalización final transparente (sin pegamento agresivo)
+        # NormalizaciÃ³n final transparente (sin pegamento agresivo)
         f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
     )
     cmd = [
@@ -1125,9 +1128,9 @@ def _run_acoustic_diagnostic(voz_path: Path, beat_path: Path) -> dict:
         return {}
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # CONFIG LOADER
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def load_config(config_path: str = "config.json") -> PipelineConfig:
     """Carga la configuracion desde un archivo JSON."""
@@ -1146,9 +1149,9 @@ def load_config(config_path: str = "config.json") -> PipelineConfig:
         return PipelineConfig()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # PIPELINE PRINCIPAL
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class MusicGenerationPipeline:
     """Orquestador principal del pipeline de generacion musical."""
@@ -1201,7 +1204,7 @@ class MusicGenerationPipeline:
 
             # ETAPA 4: Clonacion RVC
             if not self.config.rvc_model_path or self.config.rvc_model_path.lower() == "none":
-                log.info("[ETAPA 4] Omitiendo RVC porque se seleccionó 'Ninguno'. Se usará la Voz Sintética.")
+                log.info("[ETAPA 4] Omitiendo RVC porque se seleccionÃ³ 'Ninguno'. Se usarÃ¡ la Voz SintÃ©tica.")
                 state.voz_propia_path = state.voz_generica_path
             else:
                 state = stage_rvc_clone(state, self.config)
@@ -1218,7 +1221,7 @@ class MusicGenerationPipeline:
 
             # ETAPA 6: Auditoria de Calidad Automatica
             try:
-                log.info("[ETAPA 6] Ejecutando Auditor automático de calidad...")
+                log.info("[ETAPA 6] Ejecutando Auditor automÃ¡tico de calidad...")
                 analyzer_cmd = [
                     sys.executable, "audio_analyzer.py",
                     str(state.voz_propia_path),
@@ -1364,9 +1367,9 @@ class MusicGenerationPipeline:
         return state
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # ENTRYPOINT
-# ──────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 if __name__ == "__main__":
     import argparse
@@ -1404,3 +1407,4 @@ if __name__ == "__main__":
     )
 
     sys.exit(0 if final_state.stage == "COMPLETED" else 1)
+

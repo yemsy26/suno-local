@@ -8,10 +8,11 @@ __pycache__/
 # Modelos pesados y directorios ignorados
 models/
 ace_step_repo/
+ace_step_1.5_repo/
 diffrhythm_repo/
 ace_step_repo_corrupted/
-
-# Cachés locales
+gallery/
+*.db
 .pytest_cache/
 .coverage
 htmlcov/
