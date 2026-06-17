@@ -358,8 +358,8 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     # Extraer variables para el wrapper
     lyrics_str = state.prompt 
     words = len(lyrics_str.split())
-    # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 180s.
-    estimated_duration = min(180.0, max(20.0, (words * 0.4) + 4.0))
+    # Estimate: ~0.4s per word + 4s intro/outro buffer. Max limit 210s (3.5 mins).
+    estimated_duration = min(210.0, max(20.0, (words * 0.4) + 4.0))
     log.info(f"[ACE-Step] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
     # Inferir genero de la voz a partir del seed (1111=Femenina, 2222=Masculina)
@@ -1039,13 +1039,15 @@ def _run_ffmpeg_mix(
     safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]volume={beat_linear * 0.85:.4f}[beat];" # Bajar 15% al beat para abrir espacio a la voz
-        # Rack Suavizado: EQ más limpio, Compresión gentil sin ganancia extrema, Reverb corta
+        f"[0:a]volume={beat_linear * 0.90:.4f}[beat];" # Bajar 10% al beat
+        # Rack Vocal: Highpass, Presencia en 4000Hz (consonantes), Brillo en 8000Hz, Compresor vocal, Reverb
         f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=100,highshelf=f=8000:g=2,"
+        f"highpass=f=100,eq=f=4000:width_type=q:width=1:g=4,highshelf=f=8000:g=2,"
         f"acompressor=threshold=-12dB:ratio=3:attack=5:release=50:makeup=2,"
         f"aecho=0.8:0.4:30:0.15,volume={vocal_linear:.4f}[voz];"
-        f"[beat][voz]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
+        f"[beat][voz]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
+        # Glue Compressor (Sidechain falso) para pegar beat y voz, luego Normalizacion
+        f"[mixed_raw]acompressor=threshold=-14dB:ratio=2.5:attack=15:release=150:makeup=1.5[mixed];"
         f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
     )
     cmd = [
