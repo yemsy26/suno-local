@@ -365,14 +365,15 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
             lyrics_str = "[Intro]\n(instrumental intro)\n\n" + lyrics_str
 
     words = len(lyrics_str.split())
-    estimated_duration = min(210.0, max(20.0, (words * 0.4) + 4.0))
+    # Minimo 180s (3 min) y maximo 210s (3.5 min)
+    estimated_duration = min(210.0, max(180.0, (words * 0.4) + 60.0))
     log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
     voz_tag = "Female Voice"
     if state.synthetic_voice_seed and "222" in str(state.synthetic_voice_seed):
         voz_tag = "Male Voice"
         
-    enhanced_prompt = f"Pop song, {voz_tag}, Spanish lyrics, high quality vocal recording, clear vocals, vocals upfront, studio recording"
+    enhanced_prompt = f"Pop song, {voz_tag}, Spanish lyrics"
 
     
     wrapper_path = Path("ace_step_15_wrapper.py").absolute()
