@@ -78,10 +78,16 @@ def main():
         thinking=True,
         caption=args.prompt,
         lyrics=args.lyrics,
-        vocal_language="es", # ESPANOL NATIVO
+        vocal_language="es",       # Español nativo — activa el modelo fonético correcto
         duration=args.duration,
-        inference_steps=8,
-        seed=args.seed
+        inference_steps=8,         # Turbo: óptimo para RTX 4060
+        seed=args.seed,
+        # Parámetros de calidad 2026 (investigación industria):
+        lm_negative_prompt=(
+            "silence, empty, no singing, monotonous, repetitive, boring, "
+            "instrumental only, music box, noise, distortion, bad quality"
+        ),
+        fade_out_duration=2.5,     # Fade suave al final — evita cortes bruscos
     )
 
     config = GenerationConfig(

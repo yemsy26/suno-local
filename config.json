@@ -1,24 +1,33 @@
 {
+    "_comment": "Suno-Local v2.3.0 — config.json documentado",
+    
     "ollama_model": "phi4-mini:latest",
-    "acestep_model_path": "models/acestep",
-    "acestep_audio_duration": 95.0,
-    "uvr5_model_path": "models/uvr5/Kim_Vocal_2.onnx",
+    
+    "_zombie_fields": "Los campos marcados con _ son legacy y no se usan en el pipeline actual",
+    "_acestep_model_path": "models/acestep",
+    "_acestep_audio_duration": 95.0,
+    "_uvr5_model_path": "models/uvr5/Kim_Vocal_2.onnx",
+
     "rvc_model_path": "models/rvc/voz_propia.pth",
     "rvc_index_path": "models/rvc/voz_propia.index",
     "gallery_dir": "gallery",
-    "temp_dir": "Z:/",
+    "temp_dir": "temp",
     "audio_backend": "acestep",
+
     "rvc_pitch_shift": 0,
     "rvc_f0_method": "rmvpe",
-    "mix_voice_volume_db": 6.0,
-    "mix_beat_volume_db": -1.5,
-    "target_lufs": -14.0,
-    "sample_rate": 44100,
-    "supervised_mode": false,
-    "checkpoint_timeout_seconds": 600,
     "rvc_index_rate": 0.75,
     "rvc_filter_radius": 3,
     "rvc_protect": 0.45,
     "rvc_hop_length": 128,
+
+    "_note_volumes": "Valores recalibrados: se eliminó el +6dB oculto del código. Estos valores ahora son la fuente de verdad exacta.",
+    "mix_voice_volume_db": 12.0,
+    "mix_beat_volume_db": 4.5,
+    "target_lufs": -14.0,
+    "sample_rate": 48000,
+
+    "supervised_mode": false,
+    "checkpoint_timeout_seconds": 600,
     "uvr5_segment_size": 128
 }

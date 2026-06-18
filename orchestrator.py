@@ -383,7 +383,7 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     cmd = [
         sys.executable, str(wrapper_path),
         "--prompt", enhanced_prompt,
-        "--lyrics", lyrics_str.replace('\n', '\n'),
+        "--lyrics", lyrics_str,  # Fix: era replace('\n','\n') noop
         "--duration", str(estimated_duration),
         "--output_path", str(output_wav.absolute()),
         "--device_id", "0",
@@ -393,7 +393,7 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     log.info(f"[ACE-Step 1.5] Ejecutando inferencia con wrapper local...")
     
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)  # Fix: timeout de 1 hora evita bloqueo infinito
         if result.returncode != 0:
             log.error(f"[ACE-Step 1.5] Error en ejecución:\n{result.stderr}")
             state.stage = "FAILED"
@@ -406,8 +406,13 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
         t1 = time.time()
         log.info(f"[ETAPA 1] ACE-Step completado en {t1 - t0:.1f}s")
         
+    except subprocess.TimeoutExpired:
+        log.error("[ACE-Step] Timeout de 1 hora alcanzado. El proceso fue terminado.")
+        state.stage = "FAILED"
+        state.errors.append("ACE-Step timeout (3600s)")
+        return state
     except Exception as e:
-        log.error(f"[ACE-Step] ExcepciÃ³n: {e}")
+        log.error(f"[ACE-Step] Excepcion: {e}")
         state.stage = "FAILED"
         state.errors.append(str(e))
         return state
@@ -499,11 +504,19 @@ def stage_uvr5_remaster(state: PipelineState, config: PipelineConfig) -> Pipelin
     log.info(f"[ETAPA 3] beat_path         : {state.beat_path}")
     log.info(f"[ETAPA 3] voz_generica_path : {state.voz_generica_path}")
 
+    # Validación DURA post-UVR5: si los stems no existen, el pipeline no puede continuar
+    missing = []
     for p in [beat_path, voz_generica_path]:
-        if p.exists():
+        if p.exists() and p.stat().st_size > 1024:
             log.info(f"[ETAPA 3] OK {p.name} -> {p.stat().st_size / 1024:.1f} KB")
         else:
-            log.warning(f"[ETAPA 3] FALLO {p.name} NO fue generado.")
+            missing.append(p.name)
+            log.error(f"[ETAPA 3] FALLO {p.name} NO fue generado o está vacío.")
+    if missing:
+        raise FileNotFoundError(
+            f"[UVR5] Los siguientes stems no se generaron correctamente: {missing}. "
+            "Revisa los logs de audio-separator para más detalles."
+        )
 
     _log_vram("FIN ETAPA_UVR5")
     return state
@@ -675,11 +688,14 @@ def stage_rvc_clone(state: PipelineState, config: PipelineConfig) -> PipelineSta
     log.info("[RVC] Esperando 3 segundos para limpieza de VRAM...")
     time.sleep(3)
 
-    # Parametros de expresividad y anti-robot (mejorados)
-    f0_method     = "rmvpe"
-    filter_radius = 3
-    protect       = 0.33  # Valor de fábrica recomendado para evitar voz robótica/phasing
-    index_rate    = 0.55 if config.rvc_pitch_shift == 0 else 0.0
+    # Conectar TODOS los parámetros de config.json al codigo (antes estaban hardcodeados)
+    f0_method     = config.rvc_f0_method     # Conectado (era "rmvpe" hardcoded)
+    filter_radius = config.rvc_filter_radius  # Conectado (era 3 hardcoded)
+    protect       = config.rvc_protect        # Conectado (era 0.33 hardcoded, config dice 0.45)
+    index_rate    = config.rvc_index_rate     # Conectado (era 0.55 hardcoded, config dice 0.75)
+    hop_length    = config.rvc_hop_length     # Conectado (era 64 hardcoded, config dice 128)
+
+    log.info(f"[RVC] Configuración activa: f0={f0_method} | protect={protect} | index_rate={index_rate} | hop_length={hop_length}")
 
     t_start = time.time()
     try:
@@ -693,7 +709,7 @@ def stage_rvc_clone(state: PipelineState, config: PipelineConfig) -> PipelineSta
             index_rate=index_rate,
             filter_radius=filter_radius,
             protect=protect,
-            hop_length=64,
+            hop_length=hop_length,
         )
     except Exception as exc:
         log.error(f"[ETAPA 4] Error en RVC: {exc}")
@@ -932,8 +948,9 @@ def _run_ffmpeg_mix(
     target_lufs: float = -14.0,
 ) -> None:
     """Ejecuta FFmpeg para mezclar beat + voz con masterizacion LUFS a 48kHz."""
-    beat_linear  = 10 ** ((beat_vol_db  + 6.0) / 20)
-    vocal_linear = 10 ** ((vocal_vol_db + 6.0) / 20)
+    # Fix: Eliminar el +6dB oculto — usar la fórmula directa para que config.json sea la fuente de verdad
+    beat_linear  = 10 ** (beat_vol_db  / 20)
+    vocal_linear = 10 ** (vocal_vol_db / 20)
 
     # Nivel de streaming 2026 (-13 LUFS standard comercial)
     safe_lufs = -13.0 if target_lufs >= -12.0 else target_lufs
@@ -951,8 +968,8 @@ def _run_ffmpeg_mix(
         f"volume={vocal_linear:.4f}[voz_fx];"
         # Mezclar Beat y Voz
         f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
-        # Master Bus Glue
-        f"[mixed]loudnorm=I={safe_lufs}:TP=-1.0:LRA=11[out]"
+        # Master Bus: loudnorm con linear=true para evitar pumping audible (estándar 2026)
+        f"[mixed]loudnorm=I={safe_lufs}:TP=-1.0:LRA=11:linear=true[out]"
     )
     cmd = [
         "ffmpeg", "-y",
@@ -1130,6 +1147,14 @@ class MusicGenerationPipeline:
                         log.info(line.strip())
             except Exception as e:
                 log.warning(f"[ETAPA 6] El auditor de calidad no pudo generar el reporte: {e}")
+
+            # Limpieza de archivos temporales del job (evita llenar el disco con maquetas gigantes)
+            temp_job_dir = Path(self.config.temp_dir) / state.job_id
+            try:
+                shutil.rmtree(temp_job_dir, ignore_errors=True)
+                log.info(f"[CLEANUP] Directorio temporal eliminado: {temp_job_dir}")
+            except Exception as cleanup_err:
+                log.warning(f"[CLEANUP] No se pudo limpiar {temp_job_dir}: {cleanup_err}")
 
         except Exception as e:
             state.stage = "FAILED"
