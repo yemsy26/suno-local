@@ -1,7 +1,7 @@
 {
     "_comment": "Suno-Local v2.3.0 — config.json documentado",
     
-    "ollama_model": "phi4-mini:latest",
+    "ollama_model": "gemma2:latest",
     
     "_zombie_fields": "Los campos marcados con _ son legacy y no se usan en el pipeline actual",
     "_acestep_model_path": "models/acestep",
