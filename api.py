@@ -360,22 +360,30 @@ async def generate_lyrics_api(
     
     if style:
         s_lower = style.lower()
-        if "corrido" in s_lower or "tumbado" in s_lower or "bélico" in s_lower:
+        if any(k in s_lower for k in ["corrido", "tumbado", "bélico", "ranchera", "sierreño", "regional", "mariacheño"]):
             persona = "Eres un compositor de Corridos Tumbados y regional mexicano."
-            regla_de_oro = "Regla de oro: Escribe un corrido AUTÉNTICO. Usa lenguaje coloquial del norte de México y la calle. NO uses metáforas románticas o poéticas como 'el cielo llora' o 'valle del silencio'. Sé directo."
+            regla_de_oro = "Regla de oro: Escribe un corrido o canción regional AUTÉNTICA. Usa lenguaje coloquial de México y la calle/rancho. NO uses metáforas románticas de balada. Sé directo."
             style_instruction = (
                 f"El género musical de esta canción es: '{style}'.\n"
                 "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
-                "- Usa palabras como: 'compa', 'tierra', 'jefe', 'destino'.\n"
-                "- Las estrofas deben tener 4 versos cortos (ritmo rápido).\n\n"
+                "- Usa palabras típicas del género regional (compa, jefe, destino, tierra).\n"
+                "- Las estrofas deben tener 4 versos cortos.\n\n"
             )
-        elif "reggaeton" in s_lower or "reggaetón" in s_lower or "urbano" in s_lower or "dembow" in s_lower or "perreo" in s_lower:
-            persona = "Eres un exitoso artista de Reggaetón y música urbana latina."
-            regla_de_oro = "Regla de oro: Escribe con flow callejero y ritmo urbano. NO uses poesía clásica ni baladas tristes."
+        elif any(k in s_lower for k in ["reggaeton", "reggaetón", "urbano", "dembow", "perreo", "drill", "trap", "phonk", "jersey", "tech house", "afro"]):
+            persona = "Eres un exitoso artista de música urbana y club."
+            regla_de_oro = "Regla de oro: Escribe con flow callejero, ritmo urbano o de club. NO uses poesía clásica ni baladas tristes."
             style_instruction = (
                 f"El género musical de esta canción es: '{style}'.\n"
                 "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
-                "- Usa palabras muy cortas, frases rítmicas de 4 a 8 sílabas, vocabulario de fiesta o calle.\n\n"
+                "- Usa palabras muy cortas, frases rítmicas de 4 a 8 sílabas, vocabulario de fiesta, calle o discoteca.\n\n"
+            )
+        elif any(k in s_lower for k in ["salsa", "bachata", "cumbia", "tropical"]):
+            persona = "Eres un compositor de música tropical latina."
+            regla_de_oro = "Regla de oro: Escribe una letra bailable, con sabor latino y mucho sentimiento. Combina romance con ritmo de fiesta."
+            style_instruction = (
+                f"El género musical de esta canción es: '{style}'.\n"
+                "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
+                "- Usa coros muy pegadizos y repetitivos que inviten a bailar.\n\n"
             )
         else:
             style_instruction = (
@@ -387,9 +395,13 @@ async def generate_lyrics_api(
             )
 
     # Etiquetas estructurales por género
-    if "reggaet" in style.lower() or "urbano" in style.lower() or "trap" in style.lower() or "electr" in style.lower():
+    s_style = style.lower() if style else ""
+    if any(k in s_style for k in ["reggaet", "urbano", "trap", "electr", "phonk", "jersey", "house", "dembow", "drill", "afro"]):
         estructuras = "[Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Beat Drop], [Verse 3], [Chorus]"
         etiquetas_permitidas = "[Verse 1], [Verse 2], [Verse 3], [Chorus], [Bridge], [Beat Drop]"
+    elif any(k in s_style for k in ["salsa", "bachata", "cumbia"]):
+        estructuras = "[Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Percussion Break], [Verse 3], [Chorus]"
+        etiquetas_permitidas = "[Verse 1], [Verse 2], [Verse 3], [Chorus], [Bridge], [Percussion Break]"
     else:
         estructuras = "[Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Guitar Solo], [Verse 3], [Chorus]"
         etiquetas_permitidas = "[Verse 1], [Verse 2], [Verse 3], [Chorus], [Bridge], [Guitar Solo]"
