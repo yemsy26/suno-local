@@ -196,7 +196,14 @@ nav {
     margin-bottom: 20px;
 }
 
-textarea {
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+textarea, input[type="text"] {
     width: 100%;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--glass-border);
@@ -205,11 +212,14 @@ textarea {
     color: var(--text-primary);
     font-family: inherit;
     font-size: 16px;
-    resize: vertical;
     transition: var(--transition);
 }
 
-textarea:focus {
+textarea {
+    resize: vertical;
+}
+
+textarea:focus, input[type="text"]:focus {
     outline: none;
     border-color: var(--accent-primary);
     background: rgba(0, 0, 0, 0.3);

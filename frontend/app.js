@@ -80,6 +80,9 @@ function startEventStream(jobId, context) {
                 btn.disabled = false;
                 if (context === 'studio') {
                     btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Generar Canción Completa';
+                    btn.classList.add('hidden');
+                    const resetBtn = document.getElementById('btn-reset-studio');
+                    if (resetBtn) resetBtn.classList.remove('hidden');
                 } else {
                     btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Limpiar Audio';
                 }
@@ -576,6 +579,8 @@ function initStudio() {
     if (btnGenerateLyrics) {
         btnGenerateLyrics.addEventListener('click', async () => {
             const topic = document.getElementById('topic-input').value.trim();
+            const style = document.getElementById('style-input').value.trim();
+            
             if (!topic) {
                 showNotification('Falta información: Por favor, escribe un tema o idea en el cuadro de "Tema de la Canción" para que la IA sepa qué redactar.', 'error');
                 return;
@@ -587,6 +592,9 @@ function initStudio() {
             try {
                 const formData = new FormData();
                 formData.append('topic', topic);
+                if (style) {
+                    formData.append('style', style);
+                }
                 const res = await fetch(`${API_BASE}/generate_lyrics`, {
                     method: 'POST',
                     body: formData
@@ -601,7 +609,10 @@ function initStudio() {
 
                 const data = await res.json();
                 document.getElementById('lyrics-input').value = data.lyrics;
-                showNotification('Letra generada con éxito. Ya puedes editarla o proceder a generar la canción.', 'success');
+                if (data.title) {
+                    document.getElementById('song-title').value = data.title;
+                }
+                showNotification('Letra y Título generados con éxito. Ya puedes editarlos o proceder a generar la canción.', 'success');
             } catch (error) {
                 console.error(error);
                 showNotification(error.message, 'error');
@@ -616,6 +627,7 @@ function initStudio() {
         const lyrics = document.getElementById('lyrics-input').value.trim();
         const style = document.getElementById('style-input').value.trim();
         const voiceModel = document.getElementById('global-voice-selector')?.value;
+        const title = document.getElementById('song-title')?.value.trim();
         
         if (!lyrics) {
             showNotification('Falta Letra: Por favor, escribe la letra de la canción o utiliza el botón "Generar Letra (IA)".', 'error');
@@ -652,6 +664,15 @@ function initStudio() {
         const syntheticVoiceSeed = document.getElementById('synthetic-voice-selector')?.value || '-1';
         formData.append('synthetic_voice_seed', syntheticVoiceSeed);
 
+        if (title) {
+            formData.append('title', title);
+        }
+
+        const pitchShift = document.getElementById('global-pitch-selector')?.value;
+        if (pitchShift) {
+            formData.append('pitch_shift', pitchShift);
+        }
+
         try {
             const res = await fetch(`${API_BASE}/generate`, {
                 method: 'POST',
@@ -673,4 +694,19 @@ function initStudio() {
             btnGenerate.innerHTML = '<i class="fa-solid fa-bolt"></i> Generar Canción Completa';
         }
     });
+
+    const btnResetStudio = document.getElementById('btn-reset-studio');
+    if (btnResetStudio) {
+        btnResetStudio.addEventListener('click', () => {
+            document.getElementById('topic-input').value = '';
+            document.getElementById('style-input').value = '';
+            document.getElementById('song-title').value = '';
+            document.getElementById('lyrics-input').value = '';
+            document.getElementById('studio-status').classList.add('hidden');
+            document.getElementById('studio-logs').innerHTML = '';
+            btnGenerate.classList.remove('hidden');
+            btnResetStudio.classList.add('hidden');
+            showNotification('Estudio reiniciado. Listo para crear.', 'info');
+        });
+    }
 }

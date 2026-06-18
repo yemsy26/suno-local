@@ -1,5 +1,5 @@
 {
-    "ollama_model": "dolphin-mistral:latest",
+    "ollama_model": "phi4-mini:latest",
     "acestep_model_path": "models/acestep",
     "acestep_audio_duration": 95.0,
     "uvr5_model_path": "models/uvr5/Kim_Vocal_2.onnx",
@@ -16,9 +16,9 @@
     "sample_rate": 44100,
     "supervised_mode": false,
     "checkpoint_timeout_seconds": 600,
-    "rvc_index_rate": 0.55,
+    "rvc_index_rate": 0.75,
     "rvc_filter_radius": 3,
-    "rvc_protect": 0.33,
+    "rvc_protect": 0.45,
     "rvc_hop_length": 128,
     "uvr5_segment_size": 128
 }

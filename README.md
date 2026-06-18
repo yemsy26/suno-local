@@ -1,8 +1,8 @@
-# Suno Local AI - Plataforma de Generación Musical Profesional (V2.0)
+# Suno Local AI - Plataforma de Generación Musical Profesional (V2.1)
 
 **Autor y Titular de Derechos:** Ramón Antonio Burgos Jerez  
 **Licencia:** MIT License (Ver archivo `LICENSE`)  
-**Versión:** 2.0.0 (Professional Edition - Stable)
+**Versión:** 2.1.0 (Professional Edition - Stable)
 
 ---
 
@@ -12,15 +12,17 @@
 
 Al ser el dueño legítimo de este proyecto y ejecutarse enteramente en arquitectura local, el autor posee el **100% de los derechos de autor** sobre el código generado, pudiendo distribuir, monetizar y publicar en plataformas musicales sin restricciones de copyright por parte del motor neuronal.
 
-## 🚀 Novedades y Mejoras Nivel "Pro" (V2.0)
+## 🚀 Novedades y Mejoras Nivel "Pro" (V2.1)
 
 El sistema ha sido purgado de viejos códigos y parches ("hacks" fonéticos), y reestructurado para ofrecer un flujo de trabajo digno de un estudio discográfico:
 
 - **Motor Generativo ACE-Step 1.5 Nativo:** Reemplazo total de motores antiguos (DiffRhythm/YuE). Generación musical con dicción española impecable y natural sin necesidad de conversiones fonéticas artificiales ni pérdida de VRAM.
-- **Masterización Acústica (FFmpeg DSP):** Implementación de compresión de bus (*Glue Compressor*) para amalgamar la voz con la pista. Se ha inyectado un Ecualizador de Presencia a 4000Hz para devolver el brillo y dicción a las consonantes perdidas durante la clonación RVC, y se usa un Headroom de -15 LUFS para erradicar el *clipping* (saturación).
+- **Inteligencia Artificial de Letras Mejorada:** El creador de letras interno (Ollama/Phi) ahora incluye una sanitización rigurosa impulsada por Python que garantiza la estructura musical inglesa estricta (`[Verse 1]`, `[Chorus]`, `[Instrumental Outro]`), y bloquea que la IA repita las instrucciones ("semilla") robóticamente en la canción.
+- **Clonación Vocal Fluida y Equitativa (RVC rmvpe):** Mapeo perfecto desde la interfaz UI hacia el backend, con instrucciones emocionales igualadas tanto para Hombre como para Mujer (`"highly expressive vocals, passionate, emotional"`). Utiliza el algoritmo avanzado de extracción de tono `rmvpe` (con protección 0.5) para evitar cortes silábicos en agudos.
+- **UI/UX Profesional:** Sistema de progresión interactivo en el frontend. Al finalizar una generación, el sistema habilita un botón dinámico para limpiar la pantalla e iniciar una nueva composición instantáneamente sin necesidad de refrescar la página entera.
+- **Masterización Acústica (FFmpeg DSP):** Implementación de compresión de bus (*Glue Compressor*) para amalgamar la voz con la pista. Se ha inyectado un Ecualizador de Presencia a 4000Hz para devolver el brillo y dicción a las consonantes perdidas durante la clonación RVC.
 - **Gestión Avanzada de VRAM (Offloading):** Diseñado para operar en GPUs comerciales (ej. RTX 4060 8GB). Transfiere inteligentemente componentes del modelo (DiT y vocoders) a la memoria RAM de CPU durante generaciones largas (hasta 3.5 minutos continuos) para evitar errores OOM (Out Of Memory).
 - **Control Inteligente de Duración (3.0 - 3.5 min):** El sistema calcula dinámicamente la duración de la canción en base a la longitud de la letra, asegurando estructuras musicales completas y comerciales estándar (180s - 210s) con Intros instrumentales automatizadas.
-- **Clonación Vocal Fluida:** Mapeo perfecto desde la interfaz UI hacia el backend, respetando semillas y etiquetas (Male/Female Voice) con opciones de voz aleatoria realzada para mantener variedad y naturalidad musical.
 - **Respaldo Legal Automático:** Cada canción genera un `CERTIFICADO_LEGAL.md` con huellas y stems aislados (`beat.wav`, `vocals.wav`), sirviendo como prueba irrefutable de autoría humana/local frente a las distribuidoras musicales.
 
 ## 🏗️ Arquitectura y Carpetas (Inspección de Sistema)

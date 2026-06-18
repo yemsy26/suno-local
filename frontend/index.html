@@ -41,8 +41,15 @@
                 </select>
 
                 <label for="global-voice-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-microphone-lines"></i> Filtro Clonador (RVC)</label>
-                <select id="global-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer;">
+                <select id="global-voice-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer; margin-bottom: 12px;">
                     <option value="none">❌ Ninguno (Usar solo la Sintética)</option>
+                </select>
+
+                <label for="global-pitch-selector" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;"><i class="fa-solid fa-arrows-up-down"></i> Tono (Pitch Shift)</label>
+                <select id="global-pitch-selector" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none; cursor: pointer;">
+                    <option value="0">0 (Mismo Tono / Mismo Género)</option>
+                    <option value="12">+12 (IA Hombre ➜ Voz RVC Mujer)</option>
+                    <option value="-12">-12 (IA Mujer ➜ Voz RVC Hombre)</option>
                 </select>
             </div>
             <div class="status-indicator">
@@ -65,12 +72,38 @@
                 <div class="card creation-card">
                     <div class="input-group">
                         <label for="topic-input">Tema de la Canción (Opcional, para generar letra con IA)</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="topic-input" placeholder="Ej: Una canción triste sobre un robot enamorado" style="flex: 1;">
-                            <button id="generate-lyrics-btn" class="btn-secondary">
-                                <i class="fa-solid fa-pen-nib"></i> Generar Letra (IA)
-                            </button>
-                        </div>
+                        <input type="text" id="topic-input" placeholder="Ej: Una noche de fiesta en la playa, una historia de amor, superar obstáculos...">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="style-input">Estilo Musical (Selecciona de la lista o escribe el tuyo)</label>
+                        <input type="text" id="style-input" list="estilos-sugeridos" placeholder="Ej: Pop latino, guitarra acústica, ritmo animado">
+                        <datalist id="estilos-sugeridos">
+                            <option value="Corridos Tumbados, guitarras requinto, tololoche, ritmo bélico">
+                            <option value="Ranchera Moderna, mariacheño, trompetas, guitarra acústica">
+                            <option value="Sierreño Urbano, guitarras sierreñas, tuba, romántico">
+                            <option value="Afro-Latino 2026, afrobeats, percusión suave, bajos profundos, bailable">
+                            <option value="Neoperreo / Reggaetón Oscuro, beat rápido, sintetizadores pesados, club">
+                            <option value="Hyper-Cumbia, acordeón procesado, güiro rápido, bajos EDM">
+                            <option value="Synth-Regional, tololoche y sintetizadores 80s, melancólico">
+                            <option value="Trap Latino Industrial, bajo 808 distorsionado, hi-hats rápidos, agresivo">
+                            <option value="Balada Pop Atmosférica, piano con eco, sintetizadores suaves, emocional">
+                            <option value="Tech House Latino, high energy, drops fuertes, vocales rítmicas">
+                            <option value="Rock Alternativo, guitarras pesadas, batería agresiva">
+                            <option value="Salsa Urbana, trompetas, clave, beat de reggaetón de fondo">
+                            <option value="R&B Soul en Español, suave, bajo profundo, lo-fi, íntimo">
+                            <option value="Pop Acústico, guitarra suave, fogata, tranquilo">
+                        </datalist>
+                    </div>
+
+                    <div class="input-group">
+                        <button id="generate-lyrics-btn" class="btn-secondary" style="width: 100%;">
+                            <i class="fa-solid fa-pen-nib"></i> Generar Letra (IA) adaptada a este Estilo
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <label for="song-title">Título de la Canción</label>
+                        <input type="text" id="song-title" placeholder="Título generado automáticamente o escríbelo tú mismo">
                     </div>
                     
                     <div class="input-group">
@@ -80,13 +113,13 @@
 Hola mundo..."></textarea>
                     </div>
                     
-                    <div class="input-group">
-                        <label for="style-input">Estilo Musical (Géneros, instrumentos, ritmo)</label>
-                        <input type="text" id="style-input" placeholder="Ej: Pop latino, guitarra acústica, voz masculina suave, ritmo animado">
-                    </div>
+                    <!-- Style input has been moved above -->
                     
                     <button id="generate-btn" class="btn-primary" style="width: 100%; margin-top: 10px; padding: 15px; font-size: 1.1em;">
                         <i class="fa-solid fa-bolt"></i> Generar Canción Completa
+                    </button>
+                    <button id="btn-reset-studio" class="btn-secondary hidden" style="width: 100%; margin-top: 10px; padding: 15px; font-size: 1.1em;">
+                        <i class="fa-solid fa-rotate-right"></i> Crear Nueva Canción
                     </button>
                 </div>
                 
@@ -281,6 +314,6 @@ Hola mundo..."></textarea>
         </div>
     </div>
     
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>

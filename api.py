@@ -67,6 +67,12 @@ _config: PipelineConfig = PipelineConfig()
 # Schemas Pydantic
 # ──────────────────────────────────────────────────────────────────────────────
 
+class LyricsResponse(BaseModel):
+    lyrics: str
+    style: Optional[str] = None
+    title: Optional[str] = None
+
+
 class JobStatus(BaseModel):
     job_id: str
     stage: str
@@ -128,7 +134,7 @@ def _run_generation_thread(
         _jobs[job_id]["state"] = result
 
         if result.stage == "COMPLETED" and result.output_path:
-            title = state.prompt.split('\n')[1] if '\n' in state.prompt else "Nueva Cancion"
+            title = _jobs[job_id].get("title", "Nueva Canción")
             db.insert_track(
                 job_id=job_id,
                 title=title,
@@ -331,54 +337,139 @@ async def get_voices():
 
 
 @app.post("/generate_lyrics")
-async def generate_lyrics_api(topic: str = Form(...)):
-    """Llama a Ollama localmente para generar una letra basada en el tema."""
+async def generate_lyrics_api(
+    topic: str = Form(...),
+    style: Optional[str] = Form(None)
+):
+    """Llama a Ollama localmente para generar una letra basada en el tema y el estilo."""
     import httpx
 
+    style_instruction = ""
+    if style:
+        style_instruction = (
+            f"El género musical de esta canción es: '{style}'.\n"
+            "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
+            "- Si es rápido (Reggaetón, Urbano, Trap, Electrónica): Usa palabras muy cortas, frases rítmicas de 4 a 8 sílabas, vocabulario callejero o de fiesta. NO uses palabras largas y poéticas que traben al cantante.\n"
+            "- Si es lento o romántico (Balada, Pop, R&B): Usa frases más largas, poéticas y emocionales.\n"
+            "- Si es tropical (Salsa, Cumbia): Usa un tono alegre, frases repetitivas y coros pegadizos.\n\n"
+        )
+
     prompt = (
-        f"Eres un compositor top de Billboard especializado en música urbana y pop moderno latino. "
-        f"Escribe la letra de una canción sobre: '{topic}'. "
-        "REGLAS ESTRUCTURALES CRÍTICAS:\n"
-        "1. Usa etiquetas exactas: [Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Chorus].\n"
-        "   ATENCIÓN: Cada etiqueta debe ir obligatoriamente en una línea vacía SOLA, sin texto al lado.\n"
-        "2. NUNCA uses corchetes [ ] para nada más. NO pongas [Canción] ni [Autor].\n"
-        "3. Usa comas (,) frecuentemente para marcar pausas naturales donde el cantante debe respirar.\n"
-        "4. CADA LÍNEA DEBE RIMAR PERFECTAMENTE con la siguiente. Es obligatorio usar rimas AABB.\n"
-        "   Ejemplo obligatorio de rima AABB:\n"
-        "   Línea 1 termina en 'corazón' (A)\n"
-        "   Línea 2 termina en 'razón' (A)\n"
-        "   Línea 3 termina en 'dolor' (B)\n"
-        "   Línea 4 termina en 'amor' (B)\n"
-        "5. Escribe líneas muy cortas (4 a 7 palabras por línea). Si escribes líneas largas, la canción sonará mal.\n"
-        "6. ESTRICTAMENTE PROHIBIDO usar cualquier palabra en inglés (ej: baby, flow, party, love, DJ) o muletillas anglosajonas (Wao, Ohh, Yeah). El modelo acústico colapsará si detecta inglés. Usa 100% español puro.\n"
-        "7. SOLO devuelve la letra cruda, sin explicaciones ni introducciones."
+        f"Eres un compositor poético y galardonado.\n\n"
+        f"Tema para inspirarte: {topic}\n"
+        f"Regla de oro: Escribe una historia metafórica. Por favor NO escribas la frase '{topic}' dentro de la canción.\n\n"
+        f"{style_instruction}"
+        "REGLAS:\n"
+        "1. Estructura: INICIA siempre con [Instrumental Intro]. Usa [Verse 1], [Chorus], [Bridge]. TERMINA con [Instrumental Outro].\n"
+        "2. ETIQUETAS MUSICALES: Usa SOLO estas etiquetas exactas en inglés: [Verse 1], [Verse 2], [Chorus], [Bridge]. Está prohibido inventar otras (NO uses [Número Uno] ni [Verso Dos]).\n"
+        "3. Calidad: Escribe poesía profunda en español nativo con rimas naturales (AABB, ABAB).\n"
+        "4. Ritmo: Usa frases cortas para que la música respire.\n"
+        "5. Formato: Devuelve ÚNICAMENTE la letra, sin hablar conmigo ni incluir título."
     )
 
     config = load_config()
     model  = config.ollama_model if config.ollama_model else "llama3"
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            # Paso 1: Generar la letra pura
+            resp_lyrics = await client.post(
                 "http://localhost:11434/api/generate",
-                json={"model": model, "prompt": prompt, "stream": False}
+                json={
+                    "model": model, 
+                    "prompt": prompt, 
+                    "stream": False,
+                    "options": {"num_predict": 2048}
+                }
             )
-            resp.raise_for_status()
-            raw_lyrics = resp.json()["response"].strip()
-        
-        # Limpieza estricta: Eliminar introducciones del LLM (Ej. "Aquí está la letra:")
-        # Buscamos el primer '[' que indica la primera etiqueta (ej. [Verse 1])
-        if "[" in raw_lyrics:
-            raw_lyrics = raw_lyrics[raw_lyrics.find("["):]
+            resp_lyrics.raise_for_status()
+            raw_lyrics = resp_lyrics.json()["response"].strip()
             
-        return {"lyrics": raw_lyrics}
-    except Exception as e:
-        orch_log.error(f"Error generando letra con Ollama: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="No se pudo contactar con Ollama local. Asegurate de que Ollama esta en ejecucion."
-        )
+            # Soporte para modelos de razonamiento (como DeepSeek-R1): Eliminar bloques <think>
+            import re
+            raw_lyrics = re.sub(r'<think>.*?</think>', '', raw_lyrics, flags=re.DOTALL).strip()
+            
+            # Limpieza básica por si Ollama introdujo algo de texto antes de la letra
+            if "[" in raw_lyrics:
+                raw_lyrics = raw_lyrics[raw_lyrics.find("["):]
+                
+            # Limpieza brutal con Python para forzar gramática donde los LLMs pequeños fallan
+            raw_lyrics = raw_lyrics.replace("sin tú", "sin ti").replace("con ti", "contigo").replace("Sin tú", "Sin ti").replace("Con ti", "Contigo")
+            
+            # Limpieza brutal para que no repita el tema literalmente (lo reemplaza por 'esta pena' para no romper la oración)
+            if topic.lower() in raw_lyrics.lower():
+                raw_lyrics = re.sub(re.escape(topic), "esta pena", raw_lyrics, flags=re.IGNORECASE)
+            
+            # Forzar las etiquetas estructurales a INGLÉS estricto para que ACE-Step no las cante
+            raw_lyrics = re.sub(r'(?i)\[verso\s*(\d+)?\]', r'[Verse \1]', raw_lyrics).replace('[Verse ]', '[Verse]')
+            raw_lyrics = re.sub(r'(?i)\[verso\s*uno\]', '[Verse 1]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[verso\s*dos\]', '[Verse 2]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[verso\s*tres\]', '[Verse 3]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[número\s*.*?\]', '[Verse]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[coro\]', '[Chorus]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[estribillo\]', '[Chorus]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[refren\]', '[Chorus]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[puente\]', '[Bridge]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[instrumental intro\]', '[Instrumental Intro]', raw_lyrics)
+            raw_lyrics = re.sub(r'(?i)\[instrumental outro\]', '[Instrumental Outro]', raw_lyrics)
+            
+            # Asegurar que siempre termine con Instrumental Outro
+            if "[Instrumental Outro]" not in raw_lyrics:
+                raw_lyrics += "\n\n[Instrumental Outro]"
 
+            # Paso 2: Generar el título profesional basado en la letra generada
+            title_prompt = (
+                "Eres un experto en marketing musical. Lee la siguiente letra de canción y crea un título súper pegadizo, "
+                "comercial y NATURAL en ESPAÑOL (máximo 4 palabras). No uses listas de palabras raras, crea un título poético y real.\n"
+                "IMPORTANTE: Responde ÚNICAMENTE con el título. Sin comillas, sin introducciones.\n\n"
+                f"LETRA:\n{raw_lyrics}"
+            )
+            
+            resp_title = await client.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": model, 
+                    "prompt": title_prompt, 
+                    "stream": False,
+                    "options": {"num_predict": 50}
+                }
+            )
+            resp_title.raise_for_status()
+            raw_title_response = resp_title.json()["response"].replace('"', '').replace('*', '').strip()
+            
+            # Limpieza de IA habladora ("Aquí tienes el título:\n\nEl Frío de tu Ausencia")
+            title_lines = [t.strip() for t in raw_title_response.split('\n') if t.strip()]
+            title = title_lines[-1] if title_lines else "Nueva Canción"
+            
+            # Quitar prefijos molestos si los puso
+            if title.upper().startswith("TÍTULO:"):
+                title = title[7:].strip()
+            elif title.upper().startswith("TITLE:"):
+                title = title[6:].strip()
+                
+            if not title:
+                title = "Nueva Canción"
+            elif len(title) > 60:
+                # Si sigue siendo una oración larga, cortamos las primeras 5 palabras
+                title = " ".join(title.split()[:5])
+                
+            title = title.title()
+            
+        return {"title": title, "lyrics": raw_lyrics.strip()}
+    except Exception as e:
+        orch_log.warning(f"Ollama no disponible ({e}). Usando plantilla de respaldo.")
+        fallback_lyric = f"""[Verse 1]
+Escribiendo sobre {topic},
+con el alma y emoción.
+Todo empieza con pasión,
+sin perder la dirección.
+
+[Chorus]
+Música para soñar,
+nunca vamos a parar.
+Música para saltar,
+todos juntos a bailar."""
+        return {"title": "Canción de Respaldo", "lyrics": fallback_lyric}
 
 @app.post("/generate", response_model=JobStatus)
 async def generate_song(
@@ -386,6 +477,8 @@ async def generate_song(
     style:       Optional[str] = Form(None),
     voice_model: Optional[str] = Form(None),
     synthetic_voice_seed: int  = Form(-1),
+    pitch_shift: Optional[int] = Form(0),
+    title:       Optional[str] = Form(None),
 ):
     """
     Ruta 1: Genera cancion completa desde letra (y estilo) usando el backend configurado.
@@ -395,6 +488,7 @@ async def generate_song(
     temp_path.mkdir(parents=True, exist_ok=True)
 
     config = load_config()
+    config.rvc_pitch_shift = pitch_shift
     if voice_model and voice_model.lower() != "none":
         config.rvc_model_path = voice_model
         idx = voice_model.replace('.pth', '.index')
@@ -416,6 +510,7 @@ async def generate_song(
         "thread":     None,
         "log_queue":  log_queue,
         "created_at": datetime.utcnow().isoformat(),
+        "title":      title or "Nueva Canción"
     }
 
     t = threading.Thread(
