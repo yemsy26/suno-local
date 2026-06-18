@@ -255,9 +255,19 @@ db = GalleryDB()
 async def lifespan(app: FastAPI):
     global _config
     _config = load_config("config.json")
+    
+    # C3: Validar temp_dir y hacer fallback si no existe (e.g. RAM disk Z:/ no montada)
+    temp_path = Path(_config.temp_dir)
+    if not temp_path.exists() or str(_config.temp_dir).startswith("Z:"):
+        fallback = Path("temp")
+        fallback.mkdir(exist_ok=True)
+        _config.temp_dir = str(fallback)
+        log.warning(f"[CONFIG] temp_dir '{temp_path}' inaccesible. Usando fallback: '{fallback.absolute()}'")
+    
     db.init()
     log.info("[API] Servidor iniciado. Config y DB listos.")
     yield
+    db.close()  # M10: Cerrar conexión SQLite limpiamente (hace checkpoint del WAL)
     log.info("[API] Servidor detenido.")
 
 
@@ -360,14 +370,14 @@ async def generate_lyrics_api(
         f"Regla de oro: Escribe una historia metafórica. Por favor NO escribas la frase '{topic}' dentro de la canción.\n\n"
         f"{style_instruction}"
         "REGLAS:\n"
-        "1. Estructura: INICIA siempre con [Instrumental Intro]. Usa [Verse 1], [Chorus], [Bridge]. TERMINA con [Instrumental Outro].\n"
-        "2. ETIQUETAS MUSICALES: Usa SOLO estas etiquetas exactas en inglés: [Verse 1], [Verse 2], [Chorus], [Bridge]. Está prohibido inventar otras (NO uses [Número Uno] ni [Verso Dos]).\n"
+        "1. Estructura Larga (Mínimo 3 Minutos): Para que la canción alcance los 3 minutos sin hacer pausas muertas, DEBES escribir una letra MUY LARGA (mínimo 200 palabras). INICIA con [Short Instrumental Intro]. Usa obligatoriamente [Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Guitar Solo], [Verse 3], [Chorus]. TERMINA con [Instrumental Outro].\n"
+        "2. ETIQUETAS MUSICALES: Usa SOLO estas etiquetas exactas en inglés: [Verse 1], [Verse 2], [Verse 3], [Chorus], [Bridge], [Guitar Solo]. Está prohibido inventar otras (NO uses [Número Uno] ni [Verso Dos]).\n"
         "3. Calidad: Escribe poesía profunda en español nativo con rimas naturales (AABB, ABAB).\n"
         "4. Ritmo: Usa frases cortas para que la música respire.\n"
         "5. Formato: Devuelve ÚNICAMENTE la letra, sin hablar conmigo ni incluir título."
     )
 
-    config = load_config()
+    config = _config  # I1: Reutilizar _config global en lugar de crear uno nuevo por petición
     model  = config.ollama_model if config.ollama_model else "llama3"
 
     try:
@@ -412,6 +422,16 @@ async def generate_lyrics_api(
             raw_lyrics = re.sub(r'(?i)\[puente\]', '[Bridge]', raw_lyrics)
             raw_lyrics = re.sub(r'(?i)\[instrumental intro\]', '[Instrumental Intro]', raw_lyrics)
             raw_lyrics = re.sub(r'(?i)\[instrumental outro\]', '[Instrumental Outro]', raw_lyrics)
+            
+            # Limpieza de etiquetas falsas (Ej: [Nado con estrellas...])
+            # Si el corchete tiene más de 3 palabras, no es una etiqueta estructural, cambiar a paréntesis.
+            def sanitize_brackets(match):
+                content = match.group(1)
+                # Si no es una etiqueta permitida y es muy larga, la neutralizamos
+                if len(content.split()) >= 3 and "instrumental" not in content.lower() and "verse" not in content.lower():
+                    return f"({content})"
+                return match.group(0)
+            raw_lyrics = re.sub(r'\[([^\]]+)\]', sanitize_brackets, raw_lyrics)
             
             # Asegurar que siempre termine con Instrumental Outro
             if "[Instrumental Outro]" not in raw_lyrics:
@@ -774,7 +794,7 @@ async def rename_gallery_track(track_id: int, req: RenameRequest):
 
 @app.get("/gallery/{track_id}/download")
 async def download_track(track_id: int):
-    """Descarga el archivo de audio de la galeria con el titulo original."""
+    """Descarga el archivo de audio de la galeria con el titulo original. Tambien incrementa el contador."""
     track = db.get_track(track_id)
     if not track:
         raise HTTPException(status_code=404, detail=f"Track {track_id} no encontrado")
@@ -782,6 +802,12 @@ async def download_track(track_id: int):
     path = Path(track["output_path"])
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Archivo {path.name} eliminado del disco.")
+
+    # I7: Incrementar contador de reproducciones al descargar/reproducir
+    try:
+        db.increment_play_count(track_id)
+    except Exception:
+        pass  # No bloquear la descarga si falla el contador
 
     safe_title = "".join(c if c.isalnum() or c in "-_ " else "_" for c in track["title"]).strip()
     return FileResponse(
@@ -809,6 +835,28 @@ async def serve_audio(job_id: str):
         media_type="audio/wav",
         filename=Path(state.output_path).name,
     )
+
+
+# ── NUEVOS ENDPOINTS: Favoritos, Búsqueda y Estadísticas ────────────────────
+
+@app.post("/gallery/{track_id}/favorite")
+async def toggle_favorite(track_id: int):
+    """I7: Alterna el estado de favorito de una canción."""
+    track = db.get_track(track_id)
+    if not track:
+        raise HTTPException(status_code=404, detail=f"Track {track_id} no encontrado")
+    new_state = db.toggle_favorite(track_id)
+    return {"track_id": track_id, "favorite": new_state}
+
+
+@app.get("/gallery/search/{query}")
+async def search_gallery(query: str, limit: int = 20):
+    """I8: Búsqueda full-text en la galería por título, estilo o letra."""
+    if len(query.strip()) < 2:
+        raise HTTPException(status_code=400, detail="La búsqueda necesita al menos 2 caracteres.")
+    results = db.search_tracks(query.strip(), limit=limit)
+    return {"tracks": results, "total": len(results), "query": query}
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────

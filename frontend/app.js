@@ -57,9 +57,9 @@ function startEventStream(jobId, context) {
                 logsContainer.scrollTop = logsContainer.scrollHeight;
             }
             if (progressFill && data.stage) {
-                if (data.stage === 'YUE_GENERATE') progressFill.style.width = '20%';
+                if (data.stage === 'ACESTEP_GENERATE') progressFill.style.width = '20%';
                 if (data.stage === 'UVR5_SEPARATE') progressFill.style.width = '40%';
-                if (data.stage === 'DEEPFILTER_CLEAN') progressFill.style.width = '60%';
+                if (data.stage === 'DEEPFILTER_REPAIR') progressFill.style.width = '60%';
                 if (data.stage === 'RVC_CLONE') progressFill.style.width = '80%';
             }
         } else if (data.type === 'completed') {
@@ -88,9 +88,22 @@ function startEventStream(jobId, context) {
                 }
             }
             
-            if (data.output_path) {
-                showNotification('Reproduciendo pista generada...', 'info');
-                // You can add playAudio logic here if global audio is set up
+            if (data.output_path && context === 'studio') {
+                // Auto-play al completar: Buscar el track más reciente en galería
+                setTimeout(async () => {
+                    try {
+                        const galleryRes = await fetch(`${API_BASE}/gallery?limit=1`);
+                        const galleryData = await galleryRes.json();
+                        if (galleryData.tracks && galleryData.tracks.length > 0) {
+                            const lastTrack = galleryData.tracks[0];
+                            playAudio(`${API_BASE}/gallery/${lastTrack.id}/download`, lastTrack.title);
+                            showNotification(`🎵 Reproduciendo: ${lastTrack.title}`, 'success');
+                        }
+                    } catch(e) { console.warn('Auto-play fallback failed', e); }
+                }, 800);
+                // Mostrar botón de abort ocultado
+                const abortBtn = document.getElementById('btn-abort-studio');
+                if (abortBtn) abortBtn.classList.add('hidden');
             }
         }
     };
@@ -169,6 +182,9 @@ async function loadGallery() {
                     <button class="btn-secondary" style="flex: 1; padding: 4px; font-size: 12px;" onclick="renameTrack(event, ${track.id}, '${track.title.replace(/'/g, "\\'")}')">
                         <i class="fa-solid fa-pen"></i> Editar
                     </button>
+                    <button class="btn-secondary ${track.favorite ? 'fav-active' : ''}" style="padding: 4px 8px; font-size: 12px; ${track.favorite ? 'color:#f5c518;' : ''}" onclick="toggleFav(event, ${track.id}, this)" title="Favorito">
+                        <i class="fa-${track.favorite ? 'solid' : 'regular'} fa-star"></i>
+                    </button>
                     <a href="${API_BASE}/gallery/${track.id}/download" target="_blank" class="btn-secondary" style="flex: 1; padding: 4px; font-size: 12px; text-decoration: none; text-align: center;" onclick="event.stopPropagation()">
                         <i class="fa-solid fa-download"></i> WAV
                     </a>
@@ -185,6 +201,45 @@ async function loadGallery() {
         console.error("Error loading gallery", e);
     }
 }
+
+// Botones de la galería: buscar y recargar
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBtn = document.getElementById('gallery-search-btn');
+    const reloadBtn = document.getElementById('gallery-reload-btn');
+    const searchInput = document.getElementById('gallery-search-input');
+
+    if (reloadBtn) reloadBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        loadGallery();
+    });
+
+    if (searchBtn && searchInput) {
+        const doSearch = async () => {
+            const q = searchInput.value.trim();
+            if (!q) { loadGallery(); return; }
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '<p style="color: var(--text-secondary)">Buscando...</p>';
+            try {
+                const res = await fetch(`${API_BASE}/gallery/search/${encodeURIComponent(q)}`);
+                const data = await res.json();
+                grid.innerHTML = '';
+                if (!data.tracks || data.tracks.length === 0) {
+                    grid.innerHTML = '<p style="color: var(--text-secondary)">Sin resultados para: ' + q + '</p>';
+                    return;
+                }
+                data.tracks.forEach(track => {
+                    const el = document.createElement('div');
+                    el.className = 'gallery-item';
+                    el.innerHTML = `<div class="gallery-cover"><i class="fa-solid fa-music"></i><div class="gallery-play"><i class="fa-solid fa-play"></i></div></div><div class="gallery-title">${track.title}</div><div class="gallery-genre">${track.genre || 'Generado'}</div>`;
+                    el.addEventListener('click', () => playAudio(`${API_BASE}/gallery/${track.id}/download`, track.title));
+                    grid.appendChild(el);
+                });
+            } catch(e) { console.error('Search error', e); }
+        };
+        searchBtn.addEventListener('click', doSearch);
+        searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    }
+});
 
 window.renameTrack = async (event, trackId, currentTitle) => {
     event.stopPropagation();
@@ -204,6 +259,24 @@ window.renameTrack = async (event, trackId, currentTitle) => {
     } catch (e) {
         console.error("Rename error", e);
     }
+};
+
+window.toggleFav = async (event, trackId, btn) => {
+    event.stopPropagation();
+    try {
+        const res = await fetch(`${API_BASE}/gallery/${trackId}/favorite`, { method: 'POST' });
+        if (res.ok) {
+            const data = await res.json();
+            const icon = btn.querySelector('i');
+            if (data.favorite) {
+                icon.className = 'fa-solid fa-star';
+                btn.style.color = '#f5c518';
+            } else {
+                icon.className = 'fa-regular fa-star';
+                btn.style.color = '';
+            }
+        }
+    } catch(e) { console.error("Fav error", e); }
 };
 
 // ── GLOBAL AUDIO PLAYER ──
@@ -245,8 +318,16 @@ globalAudio.addEventListener('ended', () => {
 progressBarContainer.addEventListener('click', (e) => {
     const rect = progressBarContainer.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    globalAudio.currentTime = pos * globalAudio.duration;
+    if (globalAudio.duration) globalAudio.currentTime = pos * globalAudio.duration;
 });
+// Soporte touch para dispositivos móviles
+progressBarContainer.addEventListener('touchstart', (e) => {
+    const rect = progressBarContainer.getBoundingClientRect();
+    const touch = e.touches[0];
+    const pos = (touch.clientX - rect.left) / rect.width;
+    if (globalAudio.duration) globalAudio.currentTime = pos * globalAudio.duration;
+    e.preventDefault();
+}, { passive: false });
 
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
@@ -639,8 +720,10 @@ function initStudio() {
             return;
         }
         
-        if (!voiceModel) {
-            showNotification('Falta Modelo de Voz: Selecciona tu clon de voz en el selector superior derecho para clonar la pista.', 'error');
+        // Acepta "none" como voz válida (usar solo la voz sintética, sin clon)
+        // Solo bloquea si el selector está vacío por completo (error de carga de UI)
+        if (voiceModel === undefined || voiceModel === null || voiceModel === '') {
+            showNotification('Error del sistema: No se pudo leer el selector de voz. Recarga la página.', 'error');
             return;
         }
 
@@ -685,8 +768,25 @@ function initStudio() {
             }
 
             const data = await res.json();
+            currentJobId = data.job_id;
             startEventStream(data.job_id, 'studio');
             showNotification('Generación iniciada', 'success');
+            // Mostrar botón de abortar
+            const abortBtn = document.getElementById('btn-abort-studio');
+            if (abortBtn) {
+                abortBtn.classList.remove('hidden');
+                abortBtn.onclick = async () => {
+                    if (!currentJobId) return;
+                    try {
+                        await fetch(`${API_BASE}/jobs/${currentJobId}/abort`, { method: 'POST' });
+                        showNotification('⛔ Generación abortada.', 'error');
+                        abortBtn.classList.add('hidden');
+                        btnGenerate.disabled = false;
+                        btnGenerate.innerHTML = '<i class="fa-solid fa-bolt"></i> Generar Canción Completa';
+                        if (eventSource) eventSource.close();
+                    } catch(e) { console.error('Abort failed', e); }
+                };
+            }
         } catch (error) {
             console.error(error);
             showNotification(error.message, 'error');

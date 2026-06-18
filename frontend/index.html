@@ -79,20 +79,34 @@
                         <label for="style-input">Estilo Musical (Selecciona de la lista o escribe el tuyo)</label>
                         <input type="text" id="style-input" list="estilos-sugeridos" placeholder="Ej: Pop latino, guitarra acústica, ritmo animado">
                         <datalist id="estilos-sugeridos">
+                            <!-- Regional Mexicano & Fusiones -->
                             <option value="Corridos Tumbados, guitarras requinto, tololoche, ritmo bélico">
-                            <option value="Ranchera Moderna, mariacheño, trompetas, guitarra acústica">
-                            <option value="Sierreño Urbano, guitarras sierreñas, tuba, romántico">
-                            <option value="Afro-Latino 2026, afrobeats, percusión suave, bajos profundos, bailable">
-                            <option value="Neoperreo / Reggaetón Oscuro, beat rápido, sintetizadores pesados, club">
-                            <option value="Hyper-Cumbia, acordeón procesado, güiro rápido, bajos EDM">
+                            <option value="Electro-Corridos, requinto pesado, bajo EDM, ritmo rápido, fiesta">
+                            <option value="Ranchera Moderna, mariacheño, trompetas, guitarra acústica, emocional">
+                            <option value="Sierreño Urbano, guitarras sierreñas, tuba, romántico, melancólico">
                             <option value="Synth-Regional, tololoche y sintetizadores 80s, melancólico">
-                            <option value="Trap Latino Industrial, bajo 808 distorsionado, hi-hats rápidos, agresivo">
-                            <option value="Balada Pop Atmosférica, piano con eco, sintetizadores suaves, emocional">
-                            <option value="Tech House Latino, high energy, drops fuertes, vocales rítmicas">
-                            <option value="Rock Alternativo, guitarras pesadas, batería agresiva">
-                            <option value="Salsa Urbana, trompetas, clave, beat de reggaetón de fondo">
+                            
+                            <!-- Urbano & Reggaetón -->
+                            <option value="Reggaetón Comercial 2026, beat limpio, bajos profundos, perreo suave">
+                            <option value="Neoperreo / Reggaetón Oscuro, beat rápido, sintetizadores pesados, club">
+                            <option value="Dembow Dominicano, beat ultra rápido, percusión explosiva, fiesta, energía">
+                            <option value="Drill Latino, bajos 808 deslizantes, oscuro, hi-hats rápidos, calle">
+                            <option value="Trap Latino Industrial, bajo 808 distorsionado, agresivo, malianteo">
+                            
+                            <!-- Global Bass & Electrónica -->
+                            <option value="Phonk Latino, bajos extremos distorsionados, cowbells, rápido, agresivo">
+                            <option value="Jersey Club Latino, kicks rebotantes, rápido, club, bailable">
+                            <option value="Tech House Latino, high energy, drops fuertes, bajos profundos, fiesta">
+                            <option value="Afro-Latino / Afrobeats, percusión suave, bajos redondos, bailable, verano">
+                            
+                            <!-- Pop, Tropical & Alternativo -->
+                            <option value="Bachata Pop Moderna, guitarras de bachata, bongo, suave, romántico">
+                            <option value="Salsa Urbana, trompetas brillantes, clave, beat de reggaetón de fondo">
+                            <option value="Hyper-Cumbia, acordeón procesado, güiro rápido, bajos EDM, viral">
+                            <option value="Synthwave Retrowave en Español, sintetizadores de los 80s, neón, nostalgia">
                             <option value="R&B Soul en Español, suave, bajo profundo, lo-fi, íntimo">
                             <option value="Pop Acústico, guitarra suave, fogata, tranquilo">
+                            <option value="Rock Alternativo, guitarras pesadas, batería agresiva">
                         </datalist>
                     </div>
 
@@ -131,8 +145,10 @@ Hola mundo..."></textarea>
                     <div class="status-logs" id="studio-logs">
                         <!-- Logs here -->
                     </div>
-                    <div class="action-buttons hidden" id="studio-actions">
-                        <!-- Abort button removed / handled via status if needed -->
+                    <div style="margin-top: 12px; text-align: center;">
+                        <button id="btn-abort-studio" class="btn-secondary hidden" style="background: rgba(220,50,50,0.15); border-color: #e05555; color: #e05555;">
+                            <i class="fa-solid fa-stop-circle"></i> Cancelar Generación
+                        </button>
                     </div>
                 </div>
             </section>
@@ -282,6 +298,15 @@ Hola mundo..."></textarea>
                     <p>Tus creaciones musicales generadas localmente.</p>
                 </header>
                 
+                <div style="display:flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+                    <input type="text" id="gallery-search-input" placeholder="🔍 Buscar en galería..." style="flex:1; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #fff; font-size: 14px;">
+                    <button id="gallery-search-btn" class="btn-secondary" style="padding: 8px 14px;">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                    <button id="gallery-reload-btn" class="btn-secondary" style="padding: 8px 14px;" title="Recargar galería">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
                 <div id="gallery-grid" class="gallery-grid">
                     <!-- Gallery items will be injected here -->
                 </div>
@@ -314,6 +339,6 @@ Hola mundo..."></textarea>
         </div>
     </div>
     
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>

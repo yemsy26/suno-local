@@ -13,8 +13,11 @@ import gc
 import json
 import logging
 import os
+import random
+import re
 import subprocess
 import sys
+import shutil
 import threading
 import time
 import traceback
@@ -323,48 +326,54 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
 
     lyrics_str = state.prompt 
     
-    # Asegurar una intro instrumental para que la voz no choque al inicio con la pista
-    if "[intro]" not in lyrics_str.lower() and "(instrumental intro)" not in lyrics_str.lower() and "[instrumental intro]" not in lyrics_str.lower():
-        if lyrics_str.startswith("["):
-            parts = lyrics_str.split("]\n", 1)
-            if len(parts) == 2 and not parts[0].lower().startswith("[verse") and not parts[0].lower().startswith("[chorus"):
-                lyrics_str = f"{parts[0]}]\n\n[Intro]\n(instrumental intro)\n\n{parts[1]}"
-            else:
-                lyrics_str = "[Intro]\n(instrumental intro)\n\n" + lyrics_str
-        else:
-            lyrics_str = "[Intro]\n(instrumental intro)\n\n" + lyrics_str
+    # Limpiar saltos de línea excesivos (evita pausas con silencio completo) - re ya está en top-level
+    lyrics_str = re.sub(r'\n{3,}', '\n\n', lyrics_str).strip()
 
     words = len(lyrics_str.split())
-    # Minimo 180s (3 min) y maximo 210s (3.5 min)
-    estimated_duration = min(210.0, max(180.0, (words * 0.4) + 60.0))
+    # Duración dinámica natural: Permite duraciones cortas si la letra es corta, evitando 40s de intro por relleno.
+    # El sistema no forzará 3 minutos a menos que la letra tenga suficientes palabras (calculado por api.py)
+    estimated_duration = min(240.0, max(90.0, (words * 0.45) + 30.0))
     log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
-    voz_tag = "Female Vocalist, Female Singer, highly expressive vocals, passionate, emotional"
+    # Inteligencia Dúo vs Solista - re ya está en top-level
+    # Si usamos RVC, forzamos un solista y borramos coros para evitar desafinaciones. Si no, permitimos dúos naturales.
+    using_rvc = config.rvc_model_path and config.rvc_model_path.lower() != "none"
+    single_singer_tag = ""
+    if using_rvc:
+        lyrics_str = re.sub(r'\(.*?\)', '', lyrics_str)
+        single_singer_tag = ", Solo Singer, Single Vocalist, one voice only"
+        log.info("[ACE-Step] Modo Solista Estricto activado (Coros eliminados) para proteger el clon RVC.")
+    else:
+        log.info("[ACE-Step] Modo Dúo Permitido. Las voces nativas pueden interactuar.")
+
+    # random ya está en top-level
+    anti_whisper = ", powerful vocals, no whispering, no mumbling"
+
+    voz_tag = f"Female Vocalist, Female Singer, clear pronunciation, crisp vocal, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
     if str(state.synthetic_voice_seed) in ["9012", "3456"]:
-        voz_tag = "Male Vocalist, Male Singer, highly expressive vocals, passionate, emotional"
+        voz_tag = f"Male Vocalist, Male Singer, clear pronunciation, crisp vocal, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
     elif str(state.synthetic_voice_seed) == "-1":
-        import random
-        voz_tag = random.choice(["Male Vocalist, Male Singer, highly expressive vocals, passionate, emotional", "Female Vocalist, Female Singer, highly expressive vocals, passionate, emotional"])
+        voz_tag = random.choice([
+            f"Male Vocalist, Male Singer, clear pronunciation, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}",
+            f"Female Vocalist, Female Singer, clear pronunciation, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
+        ])
         state.synthetic_voice_seed = random.randint(1, 99999999)
-        
     style_tag = "Modern Pop song, high quality"
+    # re ya está en top-level
     try:
-        import re
-        import requests
         style_match = re.search(r'\[(.*?)\]', state.prompt)
-        user_style = style_match.group(1).strip() if style_match else state.prompt.split('\n')[0][:50]
+        user_style = style_match.group(1).strip() if style_match else ""
         
-        prompt_ollama = f"Act as an expert music producer in 2026. The user requested this musical style: '{user_style}'. Provide 4 to 6 highly descriptive, modern musical tags in English (comma separated) for an AI music generator. Make it sound modern, trendy, and high quality. Do not include any other text."
-        model_name = config.ollama_model if config.ollama_model else "phi4-mini:latest"
-        
-        res = requests.post("http://localhost:11434/api/generate", json={"model": model_name, "prompt": prompt_ollama, "stream": False}, timeout=10)
-        if res.status_code == 200:
-            translation = res.json().get("response", "").strip()
-            if translation and len(translation) < 150:
-                style_tag = translation
-                log.info(f"[LLM] Estilo 2026 traducido: {style_tag}")
+        # Pasar el estilo crudo directo al modelo (ej: "Corridos Tumbados")
+        # El modelo entiende multilingüe. Ollama arruinaba la traducción.
+        if user_style:
+            style_tag = f"{user_style}, highly detailed, high quality"
+        else:
+            style_tag = "highly detailed, high quality"
+            
+        log.info(f"[STYLE] Pasando estilo directo a ACE-Step: {style_tag}")
     except Exception as e:
-        log.warning(f"[LLM] No se pudo traducir el estilo: {e}")
+        log.warning(f"[STYLE] Fallo al parsear el estilo: {e}")
 
     enhanced_prompt = f"{style_tag}, {voz_tag}, Spanish lyrics"
 
@@ -669,8 +678,8 @@ def stage_rvc_clone(state: PipelineState, config: PipelineConfig) -> PipelineSta
     # Parametros de expresividad y anti-robot (mejorados)
     f0_method     = "rmvpe"
     filter_radius = 3
-    protect       = 0.5
-    index_rate    = 0.75 if config.rvc_pitch_shift == 0 else 0.0
+    protect       = 0.33  # Valor de fábrica recomendado para evitar voz robótica/phasing
+    index_rate    = 0.55 if config.rvc_pitch_shift == 0 else 0.0
 
     t_start = time.time()
     try:
@@ -903,11 +912,11 @@ def _run_ffmpeg_vocal_prep(input_path: Path, output_path: Path) -> None:
         "ffmpeg", "-y",
         "-i", str(input_path),
         "-af", filter_complex,
-        "-ar", "44100",
+        "-ar", "48000",
         "-c:a", "pcm_s16le",
         str(output_path),
     ]
-    log.info(f"[FFmpeg] Pre-Procesando Voz Generica...")
+    log.info(f"[FFmpeg] Pre-Procesando Voz Generica a 48kHz...")
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         raise RuntimeError(f"Fallo FFmpeg vocal prep: {result.stderr}")
@@ -922,24 +931,28 @@ def _run_ffmpeg_mix(
     vocal_vol_db: float = 0.0,
     target_lufs: float = -14.0,
 ) -> None:
-    """Ejecuta FFmpeg para mezclar beat + voz con normalizacion LUFS."""
+    """Ejecuta FFmpeg para mezclar beat + voz con masterizacion LUFS a 48kHz."""
     beat_linear  = 10 ** ((beat_vol_db  + 6.0) / 20)
     vocal_linear = 10 ** ((vocal_vol_db + 6.0) / 20)
 
-    # Usamos un LUFS mÃ¡s conservador para dar Headroom y evitar clipping digital final
-    safe_lufs = -15.0 if target_lufs >= -14.0 else target_lufs
+    # Nivel de streaming 2026 (-13 LUFS standard comercial)
+    safe_lufs = -13.0 if target_lufs >= -12.0 else target_lufs
 
     filter_complex = (
-        f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];" # Bajar sutilmente el beat
-        # Rack Vocal: Highpass muy suave, ecualizaciÃ³n cÃ¡lida, compresiÃ³n transparente (sin eco artificial)
-        f"[1:a]aresample=44100,aformat=channel_layouts=stereo,"
-        f"highpass=f=90,equalizer=f=3000:width_type=q:width=1:g=1.5,highshelf=f=8000:g=1,"
-        f"acompressor=threshold=-10dB:ratio=2:attack=15:release=150:makeup=1.5,"
+        f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];"
+        # Rack Vocal Pro 2026: Calidez, brillo sedoso, micro-reverb y compresion
+        f"[1:a]aresample=48000,aformat=channel_layouts=stereo,"
+        f"highpass=f=90,"
+        f"equalizer=f=250:width_type=q:width=1.0:g=2.0,"     # Calidez en el pecho
+        f"equalizer=f=4000:width_type=q:width=1.0:g=1.5,"    # Presencia vocal (De-mud)
+        f"highshelf=f=8000:g=1.5,"                           # Aire agudo
+        # Compresor MUY SUAVE (Nivelador) para levantar los finales de frase caídos sin aplastar la canción entera
+        f"acompressor=threshold=-18dB:ratio=2.5:attack=5:release=50:makeup=2.5,"
         f"volume={vocal_linear:.4f}[voz_fx];"
-        # Mezclar Beat y Voz de forma estÃ¡tica (sin ducking ni bajadas de volumen)
+        # Mezclar Beat y Voz
         f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
-        # NormalizaciÃ³n final transparente (sin pegamento agresivo)
-        f"[mixed]loudnorm=I={safe_lufs}:TP=-1.5:LRA=11[out]"
+        # Master Bus Glue
+        f"[mixed]loudnorm=I={safe_lufs}:TP=-1.0:LRA=11[out]"
     )
     cmd = [
         "ffmpeg", "-y",
@@ -947,7 +960,7 @@ def _run_ffmpeg_mix(
         "-i", str(vocal_path),
         "-filter_complex", filter_complex,
         "-map", "[out]",
-        "-ar", "44100",
+        "-ar", "48000",
         "-c:a", "pcm_s16le",
         str(output_path),
     ]
