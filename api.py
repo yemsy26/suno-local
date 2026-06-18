@@ -355,24 +355,46 @@ async def generate_lyrics_api(
     import httpx
 
     style_instruction = ""
+    persona = "Eres un compositor poético y galardonado."
+    regla_de_oro = "Regla de oro: Escribe una historia metafórica. Por favor NO escribas la frase del tema literalmente dentro de la canción."
+    
     if style:
-        style_instruction = (
-            f"El género musical de esta canción es: '{style}'.\n"
-            "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
-            "- Si es rápido (Reggaetón, Urbano, Trap, Electrónica): Usa palabras muy cortas, frases rítmicas de 4 a 8 sílabas, vocabulario callejero o de fiesta. NO uses palabras largas y poéticas que traben al cantante.\n"
-            "- Si es lento o romántico (Balada, Pop, R&B): Usa frases más largas, poéticas y emocionales.\n"
-            "- Si es tropical (Salsa, Cumbia): Usa un tono alegre, frases repetitivas y coros pegadizos.\n\n"
-        )
+        s_lower = style.lower()
+        if "corrido" in s_lower or "tumbado" in s_lower or "bélico" in s_lower:
+            persona = "Eres un compositor de Corridos Tumbados y regional mexicano."
+            regla_de_oro = "Regla de oro: Escribe un corrido AUTÉNTICO. Usa lenguaje coloquial del norte de México y la calle. NO uses metáforas románticas o poéticas como 'el cielo llora' o 'valle del silencio'. Sé directo."
+            style_instruction = (
+                f"El género musical de esta canción es: '{style}'.\n"
+                "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
+                "- Usa palabras como: 'compa', 'tierra', 'jefe', 'destino'.\n"
+                "- Las estrofas deben tener 4 versos cortos (ritmo rápido).\n\n"
+            )
+        elif "reggaeton" in s_lower or "urbano" in s_lower or "dembow" in s_lower:
+            persona = "Eres un exitoso artista de Reggaetón y música urbana latina."
+            regla_de_oro = "Regla de oro: Escribe con flow callejero y ritmo urbano. NO uses poesía clásica ni baladas tristes."
+            style_instruction = (
+                f"El género musical de esta canción es: '{style}'.\n"
+                "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
+                "- Usa palabras muy cortas, frases rítmicas de 4 a 8 sílabas, vocabulario de fiesta o calle.\n\n"
+            )
+        else:
+            style_instruction = (
+                f"El género musical de esta canción es: '{style}'.\n"
+                "ADAPTA LA LETRA ESTRICTAMENTE A ESTE GÉNERO:\n"
+                "- Si es rápido: Usa palabras cortas y rítmicas.\n"
+                "- Si es lento o romántico: Usa frases más largas, poéticas y emocionales.\n"
+                "- Si es tropical: Usa un tono alegre y coros pegadizos.\n\n"
+            )
 
     prompt = (
-        f"Eres un compositor poético y galardonado.\n\n"
+        f"{persona}\n\n"
         f"Tema para inspirarte: {topic}\n"
-        f"Regla de oro: Escribe una historia metafórica. Por favor NO escribas la frase '{topic}' dentro de la canción.\n\n"
+        f"{regla_de_oro}\n\n"
         f"{style_instruction}"
         "REGLAS:\n"
         "1. Estructura Larga (Mínimo 3 Minutos): Para que la canción alcance los 3 minutos sin hacer pausas muertas, DEBES escribir una letra MUY LARGA (mínimo 200 palabras). INICIA con [Short Instrumental Intro]. Usa obligatoriamente [Verse 1], [Chorus], [Verse 2], [Chorus], [Bridge], [Guitar Solo], [Verse 3], [Chorus]. TERMINA con [Instrumental Outro].\n"
         "2. ETIQUETAS MUSICALES: Usa SOLO estas etiquetas exactas en inglés: [Verse 1], [Verse 2], [Verse 3], [Chorus], [Bridge], [Guitar Solo]. Está prohibido inventar otras (NO uses [Número Uno] ni [Verso Dos]).\n"
-        "3. Calidad: Escribe poesía profunda en español nativo con rimas naturales (AABB, ABAB).\n"
+        "3. Calidad: Escribe en español nativo con rimas naturales (AABB, ABAB). Adáptate al tono de la 'Regla de oro'.\n"
         "4. Ritmo: Usa frases cortas para que la música respire.\n"
         "5. Formato: Devuelve ÚNICAMENTE la letra, sin hablar conmigo ni incluir título."
     )
