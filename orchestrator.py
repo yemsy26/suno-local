@@ -330,9 +330,19 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     lyrics_str = re.sub(r'\n{3,}', '\n\n', lyrics_str).strip()
 
     words = len(lyrics_str.split())
-    # Duración dinámica natural: Permite duraciones cortas si la letra es corta, evitando 40s de intro por relleno.
-    # El sistema no forzará 3 minutos a menos que la letra tenga suficientes palabras (calculado por api.py)
-    estimated_duration = min(240.0, max(90.0, (words * 0.45) + 30.0))
+    # Duración dinámica POR GÉNERO:
+    # Géneros rápidos (corridos 135bpm, reggaeton 95bpm) consumen más palabras/minuto.
+    _s = state.prompt.lower()
+    if any(k in _s for k in ["corrido", "tumbado", "bélico", "belico", "requinto", "tololoche", "regional", "sierreño", "ranchera"]):
+        estimated_duration = max(185.0, min(220.0, (words * 0.55) + 35.0))
+    elif any(k in _s for k in ["reggaeton", "dembow", "urbano", "trap", "drill", "phonk", "jersey", "club", "afro"]):
+        estimated_duration = max(185.0, min(215.0, (words * 0.60) + 30.0))
+    elif any(k in _s for k in ["r&b", "soul", "lo-fi"]):
+        estimated_duration = max(185.0, min(225.0, (words * 0.85) + 40.0))
+    elif any(k in _s for k in ["balada", "romantic", "bolero"]):
+        estimated_duration = max(185.0, min(220.0, (words * 0.90) + 40.0))
+    else:
+        estimated_duration = max(185.0, min(220.0, (words * 0.65) + 35.0))
     log.info(f"[ACE-Step 1.5] Letra de {words} palabras. Duración dinámica calculada: {estimated_duration:.1f}s")
     
     # Inteligencia Dúo vs Solista - re ya está en top-level
@@ -346,36 +356,58 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
     else:
         log.info("[ACE-Step] Modo Dúo Permitido. Las voces nativas pueden interactuar.")
 
-    # random ya está en top-level
     anti_whisper = ", powerful vocals, no whispering, no mumbling"
-
-    voz_tag = f"Female Vocalist, Female Singer, clear pronunciation, crisp vocal, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
-    if str(state.synthetic_voice_seed) in ["9012", "3456"]:
-        voz_tag = f"Male Vocalist, Male Singer, clear pronunciation, crisp vocal, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
-    elif str(state.synthetic_voice_seed) == "-1":
-        voz_tag = random.choice([
-            f"Male Vocalist, Male Singer, clear pronunciation, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}",
-            f"Female Vocalist, Female Singer, clear pronunciation, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
-        ])
-        state.synthetic_voice_seed = random.randint(1, 99999999)
-    style_tag = "Modern Pop song, high quality"
-    # re ya está en top-level
+    
+    # Extraer estilo para etiquetas de voz dinámicas (Ignorar etiquetas estructurales)
+    user_style = ""
     try:
-        style_match = re.search(r'\[(.*?)\]', state.prompt)
-        user_style = style_match.group(1).strip() if style_match else ""
-        
-        # Pasar el estilo crudo directo al modelo (ej: "Corridos Tumbados")
-        # El modelo entiende multilingüe. Ollama arruinaba la traducción.
-        if user_style:
-            style_tag = f"{user_style}, highly detailed, high quality"
-        else:
-            style_tag = "highly detailed, high quality"
-            
-        log.info(f"[STYLE] Pasando estilo directo a ACE-Step: {style_tag}")
+        # Buscar todos los corchetes
+        brackets = re.findall(r'\[(.*?)\]', state.prompt)
+        for b in brackets:
+            b_low = b.lower()
+            # Si el contenido del corchete no es una etiqueta musical estructural, asumimos que es el género
+            if not any(tag in b_low for tag in ["verse", "chorus", "intro", "outro", "bridge", "solo", "drop", "break"]):
+                user_style = b.strip()
+                break
     except Exception as e:
         log.warning(f"[STYLE] Fallo al parsear el estilo: {e}")
 
-    enhanced_prompt = f"{style_tag}, {voz_tag}, Spanish lyrics"
+    s_lower = user_style.lower()
+    
+    def _get_voz_tag(is_male=False):
+        if any(k in s_lower for k in ["corrido", "tumbado", "bélico", "ranchera", "sierreño", "regional"]):
+            # Para Corridos, se fuerza cantante regional en español
+            gender = "Male" if is_male else "Female"
+            return f"{gender} regional mexican vocalist, {gender} Singer, raspy authentic voice, passionate, emotional{anti_whisper}{single_singer_tag}"
+        elif any(k in s_lower for k in ["reggaeton", "dembow", "urbano", "trap", "drill", "phonk", "jersey", "club", "afro"]):
+            # Para Urbano
+            gender = "Male" if is_male else "Female"
+            return f"Urban latino {gender.lower()} vocalist, {gender} Singer, rhythmic flow, confident, energetic{anti_whisper}{single_singer_tag}"
+        elif any(k in s_lower for k in ["salsa", "bachata", "cumbia"]):
+            # Para Tropical
+            gender = "Male" if is_male else "Female"
+            return f"Tropical latino {gender.lower()} vocalist, {gender} Singer, lively, clear pronunciation, expressive{anti_whisper}{single_singer_tag}"
+        else:
+            # Pop genérico
+            gender = "Male" if is_male else "Female"
+            return f"{gender} Vocalist, {gender} Singer, clear pronunciation, crisp vocal, highly expressive vocals, passionate, emotional{anti_whisper}{single_singer_tag}"
+
+    if str(state.synthetic_voice_seed) in ["9012", "3456"]:
+        voz_tag = _get_voz_tag(is_male=True)
+    elif str(state.synthetic_voice_seed) == "-1":
+        voz_tag = _get_voz_tag(is_male=random.choice([True, False]))
+        state.synthetic_voice_seed = random.randint(1, 99999999)
+    else:
+        voz_tag = _get_voz_tag(is_male=False)
+
+    if user_style:
+        style_tag = f"{user_style}, highly detailed, high quality"
+    else:
+        style_tag = "highly detailed, high quality"
+        
+    log.info(f"[STYLE] Pasando estilo directo a ACE-Step: {style_tag}")
+
+    enhanced_prompt = f"{style_tag}, {voz_tag}, Spanish lyrics, consistent voice throughout, single vocalist, in-tune singing, natural phrasing"
 
     
     wrapper_path = Path("ace_step_15_wrapper.py").absolute()
