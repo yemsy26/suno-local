@@ -455,9 +455,9 @@ def stage_acestep_generate(state: PipelineState, config: PipelineConfig) -> Pipe
 
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ————————————————————————————————————————————————————————————————————————————————
 # ETAPA 3: UVR5 - SEPARACION DE STEMS
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ————————————————————————————————————————————————————————————————————————————————
 
 def stage_uvr5_remaster(state: PipelineState, config: PipelineConfig) -> PipelineState:
     """
@@ -486,8 +486,8 @@ def stage_uvr5_remaster(state: PipelineState, config: PipelineConfig) -> Pipelin
 
     t_start = time.time()
     try:
-        # CEREBRO 1: El Musico (Beat Puro)
-        log.info("[UVR5 ENSEMBLE] Cerebro 1/2: Extrayendo Pista Instrumental Pura...")
+        # CEREBRO 1: El Musico (Beat Puro) — MDX-Net Instrumental
+        log.info("[UVR5 ENSEMBLE] Cerebro 1/2: Extrayendo Pista Instrumental Pura (MDX-Net)...")
         _run_uvr5_cli(
             input_path=state.maqueta_path,
             model_path="models/uvr5/UVR-MDX-NET-Inst_HQ_3.onnx",
@@ -496,11 +496,11 @@ def stage_uvr5_remaster(state: PipelineState, config: PipelineConfig) -> Pipelin
             segment_size=config.uvr5_segment_size,
         )
 
-        # CEREBRO 2: El Recolector (Todas las Voces)
-        log.info("[UVR5 ENSEMBLE] Cerebro 2/2: Recolectando Todas las Voces Intactas...")
+        # CEREBRO 2: El Recolector (Todas las Voces) — BS-Roformer SDR 12.97 (estado del arte 2026)
+        log.info("[UVR5 ENSEMBLE] Cerebro 2/2: Recolectando Voces con BS-Roformer (SDR ~12.97)...")
         _run_uvr5_cli(
             input_path=state.maqueta_path,
-            model_path="models/uvr5/Kim_Vocal_2.onnx",
+            model_path="models/uvr5/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
             output_instrumental=temp_dir / "basura_inst_2.wav",
             output_vocals=todas_las_voces_path,
             segment_size=config.uvr5_segment_size,
@@ -563,11 +563,13 @@ def _run_uvr5_cli(
 ) -> None:
     """
     Ejecuta UVR5 via subprocess con reintentos automaticos.
+    Soporta MDX-Net (.onnx) y BS-Roformer (.ckpt) automaticamente.
     Si crashea con OOM (codigo 3221226505), reduce segment_size y reintenta.
     Secuencia: [segment_size] -> [segment_size//2] -> [32] -> fallo.
     """
     model_filename = Path(model_path).name
     OOM_CODE       = 3221226505  # 0xC0000409
+    is_roformer    = model_filename.endswith(".ckpt")
 
     # Localizar audio-separator
     audio_sep_bin  = str(Path(sys.executable).parent / "audio-separator")
@@ -582,18 +584,35 @@ def _run_uvr5_cli(
         cmd = [
             audio_sep_bin,
             str(input_path),
-            "--model_filename",   model_filename,
-            "--model_file_dir",   model_file_dir,
-            "--output_dir",       str(output_instrumental.parent),
-            "--output_format",    "WAV",
-            "--mdx_segment_size", str(seg_size),
-            "--mdxc_segment_size", str(seg_size),
+            "--model_filename", model_filename,
+            "--model_file_dir", model_file_dir,
+            "--output_dir",     str(output_instrumental.parent),
+            "--output_format",  "WAV",
         ]
+
+        # En la version de audio-separator instalada, MDXC maneja los Roformer segment sizes
+        if is_roformer:
+            cmd += ["--mdxc_segment_size", str(seg_size)]
+            log.info(f"[UVR5] Modo BS-Roformer (SDR ~12.97). segment_size={seg_size}")
+        else:
+            cmd += [
+                "--mdx_segment_size",  str(seg_size),
+                "--mdxc_segment_size", str(seg_size),
+            ]
+            log.info(f"[UVR5] Modo MDX-Net. segment_size={seg_size}")
 
         log.info(f"[UVR5] Intentando separacion con segment_size={seg_size}...")
         log.info(f"[UVR5] Comando: {' '.join(str(c) for c in cmd)}")
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+        except subprocess.TimeoutExpired as te:
+            log.warning(
+                f"[UVR5] Timeout ({te.timeout}s) con segment_size={seg_size}. "
+                "Reintentando con segmento menor..."
+            )
+            last_error = f"timeout seg_size={seg_size}"
+            continue
 
         if result.returncode == 0:
             log.info(f"[UVR5] Separacion exitosa con segment_size={seg_size}.")
@@ -603,20 +622,20 @@ def _run_uvr5_cli(
         if result.returncode in (OOM_CODE, -1073740791):
             log.warning(
                 f"[UVR5] Crash OOM (codigo {result.returncode}) con segment_size={seg_size}. "
-                f"Reintentando con segmento menor..."
+                "Reintentando con segmento menor..."
             )
             last_error = f"OOM crash con segment_size={seg_size}"
             continue
 
-        log.error(f"[UVR5] STDERR:\n{result.stderr}")
+        log.error(f"[UVR5] STDERR:\n{result.stderr[-2000:]}")
         raise RuntimeError(
             f"UVR5 termino con codigo {result.returncode}: {result.stderr[-500:]}"
         )
     else:
         raise RuntimeError(
-            f"UVR5 fallo con OOM en todos los tamanios de segmento ({sizes_to_try}). "
+            f"UVR5 fallo en todos los tamanios de segmento ({sizes_to_try}). "
             f"Ultimo error: {last_error}. "
-            f"Instala onnxruntime-gpu para mejorar el rendimiento."
+            "Verifica que onnxruntime-gpu este instalado o reduce uvr5_segment_size en config.json."
         )
 
     # Renombrar archivos a nombres canonicos
@@ -674,7 +693,9 @@ def stage_deepfilter_repair(state: PipelineState, config: PipelineConfig) -> Pip
         audio, _ = load_audio(voz_sucia_path, sr=df_state.sr())
 
         log.info("[DEEPFILTER] Procesando audio con IA...")
-        enhanced = enhance(model, df_state, audio, atten_lim_db=6.0)
+        # Reducido de 6.0 a 2.0: El Roformer ya entrega voces limpias.
+        # Una limpieza agresiva aquí causa un efecto de "chillar" o "robot".
+        enhanced = enhance(model, df_state, audio, atten_lim_db=2.0)
 
         log.info("[DEEPFILTER] Guardando audio limpio...")
         save_audio(voz_limpia_path, enhanced, df_state.sr())
@@ -989,17 +1010,16 @@ def _run_ffmpeg_mix(
 
     filter_complex = (
         f"[0:a]volume={beat_linear * 0.90:.4f}[beat_raw];"
-        # Rack Vocal Pro 2026: Calidez, brillo sedoso, micro-reverb y compresion
+        # Rack Vocal Pro: Transparente y natural, confiando en la limpieza nativa del BS-Roformer
         f"[1:a]aresample=48000,aformat=channel_layouts=stereo,"
-        f"highpass=f=90,"
-        f"equalizer=f=250:width_type=q:width=1.0:g=2.0,"     # Calidez en el pecho
-        f"equalizer=f=4000:width_type=q:width=1.0:g=1.5,"    # Presencia vocal (De-mud)
-        f"highshelf=f=8000:g=1.5,"                           # Aire agudo
-        # Compresor MUY SUAVE (Nivelador) para levantar los finales de frase caídos sin aplastar la canción entera
-        f"acompressor=threshold=-18dB:ratio=2.5:attack=5:release=50:makeup=2.5,"
+        f"highpass=f=80,"                                    # Remueve retumbe muy grave
+        # Compresor nivelador MUY suave. makeup debe ser >= 1.0 en FFmpeg.
+        f"acompressor=threshold=-10dB:ratio=1.5:attack=20:release=100:makeup=1.0,"
         f"volume={vocal_linear:.4f}[voz_fx];"
         # Mezclar Beat y Voz
-        f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
+        f"[beat_raw][voz_fx]amix=inputs=2:duration=longest:dropout_transition=2[mixed_raw];"
+        # Fade In muy suave (1.5s) para evitar que el intro entre "estralloso" o brusco
+        f"[mixed_raw]afade=t=in:ss=0:d=1.5[mixed];"
         # Master Bus: loudnorm con linear=true para evitar pumping audible (estándar 2026)
         f"[mixed]loudnorm=I={safe_lufs}:TP=-1.0:LRA=11:linear=true[out]"
     )
@@ -1180,19 +1200,21 @@ class MusicGenerationPipeline:
             except Exception as e:
                 log.warning(f"[ETAPA 6] El auditor de calidad no pudo generar el reporte: {e}")
 
-            # Limpieza de archivos temporales del job (evita llenar el disco con maquetas gigantes)
-            temp_job_dir = Path(self.config.temp_dir) / state.job_id
-            try:
-                shutil.rmtree(temp_job_dir, ignore_errors=True)
-                log.info(f"[CLEANUP] Directorio temporal eliminado: {temp_job_dir}")
-            except Exception as cleanup_err:
-                log.warning(f"[CLEANUP] No se pudo limpiar {temp_job_dir}: {cleanup_err}")
-
         except Exception as e:
             state.stage = "FAILED"
             state.errors.append(str(e))
             log.error(f"[PIPELINE] Error fatal en job {state.job_id}: {e}")
             log.error(traceback.format_exc())
+
+        finally:
+            # Limpieza GARANTIZADA de archivos temporales del job (evita llenar el disco/RAM)
+            temp_job_dir = Path(self.config.temp_dir) / state.job_id
+            try:
+                if temp_job_dir.exists():
+                    shutil.rmtree(temp_job_dir, ignore_errors=True)
+                    log.info(f"[CLEANUP] Directorio temporal eliminado exitosamente: {temp_job_dir}")
+            except Exception as cleanup_err:
+                log.warning(f"[CLEANUP] No se pudo limpiar {temp_job_dir}: {cleanup_err}")
 
         return state
 
@@ -1258,6 +1280,16 @@ class MusicGenerationPipeline:
             log.error(f"[PIPELINE] Error en remaster {state.job_id}: {e}")
             log.error(traceback.format_exc())
 
+        finally:
+            temp_job_dir = Path(self.config.temp_dir) / state.job_id
+            try:
+                if temp_job_dir.exists():
+                    import shutil
+                    shutil.rmtree(temp_job_dir, ignore_errors=True)
+                    log.info(f"[CLEANUP] Directorio temporal eliminado: {temp_job_dir}")
+            except Exception as cleanup_err:
+                log.warning(f"[CLEANUP] No se pudo limpiar {temp_job_dir}: {cleanup_err}")
+
         return state
 
     def run_repair(
@@ -1316,6 +1348,16 @@ class MusicGenerationPipeline:
             state.stage = "FAILED"
             state.errors.append(str(e))
             log.error(f"[PIPELINE] Error en repair {state.job_id}: {e}")
+
+        finally:
+            temp_job_dir = Path(self.config.temp_dir) / state.job_id
+            try:
+                if temp_job_dir.exists():
+                    import shutil
+                    shutil.rmtree(temp_job_dir, ignore_errors=True)
+                    log.info(f"[CLEANUP] Directorio temporal eliminado: {temp_job_dir}")
+            except Exception as cleanup_err:
+                log.warning(f"[CLEANUP] No se pudo limpiar {temp_job_dir}: {cleanup_err}")
 
         return state
 

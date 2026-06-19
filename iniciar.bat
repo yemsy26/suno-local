@@ -22,8 +22,8 @@ IF NOT EXIST "%PYTHON%" (
     exit /b 1
 )
 
-echo [2/5] Verificando GPU...
-"%PYTHON%" -c "import torch; print('CUDA:', torch.cuda.is_available())" >nul 2>&1
+echo [2/5] Verificando GPU... (Omitido temporalmente para evitar cuelgues)
+REM "%PYTHON%" -c "import torch; print('CUDA:', torch.cuda.is_available())" >nul 2>&1
 
 echo [3/5] Verificando Ollama...
 curl -s --max-time 2 http://localhost:11434/api/tags >nul 2>&1

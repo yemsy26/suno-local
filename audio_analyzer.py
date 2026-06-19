@@ -55,7 +55,7 @@ def analyze_audio(vocal_path, beat_path):
         if tempo_val < 60 or tempo_val > 200:
             report.append("   [ADVERTENCIA]: Ritmo anormal o descoordinado.")
         else:
-            report.append("   [OK]: Ritmo estable dentro de los parametros de pop/latino.")
+            report.append("   [OK]: Ritmo estable dentro de los parametros normales.")
 
     except Exception as e:
         report.append(f" Error durante el analisis: {str(e)}")

@@ -1,17 +1,12 @@
 {
-    "_comment": "Suno-Local v2.3.0 — config.json documentado",
+    "_doc": "Suno-Local v3.0 — config.json limpio",
     
     "ollama_model": "gemma2:latest",
-    
-    "_zombie_fields": "Los campos marcados con _ son legacy y no se usan en el pipeline actual",
-    "_acestep_model_path": "models/acestep",
-    "_acestep_audio_duration": 95.0,
-    "_uvr5_model_path": "models/uvr5/Kim_Vocal_2.onnx",
 
     "rvc_model_path": "models/rvc/voz_propia.pth",
     "rvc_index_path": "models/rvc/voz_propia.index",
     "gallery_dir": "gallery",
-    "temp_dir": "temp",
+    "temp_dir": "Z:/temp",
     "audio_backend": "acestep",
 
     "rvc_pitch_shift": 0,
@@ -21,7 +16,6 @@
     "rvc_protect": 0.45,
     "rvc_hop_length": 128,
 
-    "_note_volumes": "Valores recalibrados: se eliminó el +6dB oculto del código. Estos valores ahora son la fuente de verdad exacta.",
     "mix_voice_volume_db": 12.0,
     "mix_beat_volume_db": 4.5,
     "target_lufs": -14.0,

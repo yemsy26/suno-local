@@ -256,9 +256,9 @@ async def lifespan(app: FastAPI):
     global _config
     _config = load_config("config.json")
     
-    # C3: Validar temp_dir y hacer fallback si no existe (e.g. RAM disk Z:/ no montada)
+    # Validar temp_dir y hacer fallback si no existe (e.g. RAM disk Z:/ no montada)
     temp_path = Path(_config.temp_dir)
-    if not temp_path.exists() or str(_config.temp_dir).startswith("Z:"):
+    if not temp_path.exists():
         fallback = Path("temp")
         fallback.mkdir(exist_ok=True)
         _config.temp_dir = str(fallback)
@@ -267,8 +267,10 @@ async def lifespan(app: FastAPI):
     db.init()
     log.info("[API] Servidor iniciado. Config y DB listos.")
     yield
-    db.close()  # M10: Cerrar conexión SQLite limpiamente (hace checkpoint del WAL)
-    log.info("[API] Servidor detenido.")
+    if hasattr(app.state, "orchestrator"):
+        app.state.orchestrator.stop_all()
+    db.close()  # Cerrar conexión SQLite limpiamente (hace checkpoint del WAL)
+    log.info("[API] Componentes globales cerrados.")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -883,7 +885,7 @@ async def serve_audio(job_id: str):
 
 @app.post("/gallery/{track_id}/favorite")
 async def toggle_favorite(track_id: int):
-    """I7: Alterna el estado de favorito de una canción."""
+    """Alterna el estado de favorito de una canción."""
     track = db.get_track(track_id)
     if not track:
         raise HTTPException(status_code=404, detail=f"Track {track_id} no encontrado")
@@ -893,7 +895,7 @@ async def toggle_favorite(track_id: int):
 
 @app.get("/gallery/search/{query}")
 async def search_gallery(query: str, limit: int = 20):
-    """I8: Búsqueda full-text en la galería por título, estilo o letra."""
+    """Búsqueda full-text en la galería por título, estilo o letra."""
     if len(query.strip()) < 2:
         raise HTTPException(status_code=400, detail="La búsqueda necesita al menos 2 caracteres.")
     results = db.search_tracks(query.strip(), limit=limit)

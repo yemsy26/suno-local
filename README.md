@@ -1,88 +1,71 @@
-# Suno Local AI - Plataforma de Generación Musical Profesional (V2.1)
+# Suno Local - Open Source AI Music Studio (v2.1 Stable)
 
 **Autor y Titular de Derechos:** Ramón Antonio Burgos Jerez  
 **Licencia:** MIT License (Ver archivo `LICENSE`)  
-**Versión:** 2.1.0 (Professional Edition - Stable)
+**Versión:** 2.1.0 (Professional Edition)
 
 ---
 
 ## 🎵 Descripción del Proyecto
 
-**Suno Local AI** es una plataforma profesional para la generación local y de código abierto de música con inteligencia artificial. Está diseñada específicamente para producir canciones de alta calidad en **español latino puro**, respetando acentos, fluidez natural y permitiendo el uso tanto de voces genéricas como de modelos de clonación de voz (RVC) propios.
+**Suno Local** es una plataforma integral de grado profesional para la composición, producción y masterización de música generada por Inteligencia Artificial de forma **100% local**. Está diseñada para operar de forma óptima en GPUs comerciales (mínimo 8GB VRAM) y destaca por su capacidad nativa para componer canciones con **letras y voces en español**, evitando los tradicionales acentos robóticos o la necesidad de traducciones fonéticas (hacks).
 
-Al ser el dueño legítimo de este proyecto y ejecutarse enteramente en arquitectura local, el autor posee el **100% de los derechos de autor** sobre el código generado, pudiendo distribuir, monetizar y publicar en plataformas musicales sin restricciones de copyright por parte del motor neuronal.
+El software otorga total soberanía sobre la creación musical. Al ejecutarse localmente y utilizar motores Open Source, el creador retiene el **100% de los derechos comerciales** (publishing y master) para su libre distribución y monetización en plataformas de streaming (Spotify, Apple Music, YouTube).
 
-## 🚀 Novedades y Mejoras Nivel "Pro" (V2.1)
+## 🚀 Características y Pipeline de Producción
 
-El sistema ha sido purgado de viejos códigos y parches ("hacks" fonéticos), y reestructurado para ofrecer un flujo de trabajo digno de un estudio discográfico:
+El núcleo del sistema integra una cadena de procesamiento (Pipeline) que replica el flujo de un estudio de grabación profesional:
 
-- **Motor Generativo ACE-Step 1.5 Nativo:** Reemplazo total de motores antiguos (DiffRhythm/YuE). Generación musical con dicción española impecable y natural sin necesidad de conversiones fonéticas artificiales ni pérdida de VRAM.
-- **Inteligencia Artificial de Letras Mejorada:** El creador de letras interno (Ollama/Phi) ahora incluye una sanitización rigurosa impulsada por Python que garantiza la estructura musical inglesa estricta (`[Verse 1]`, `[Chorus]`, `[Instrumental Outro]`), y bloquea que la IA repita las instrucciones ("semilla") robóticamente en la canción.
-- **Clonación Vocal Fluida y Equitativa (RVC rmvpe):** Mapeo perfecto desde la interfaz UI hacia el backend, con instrucciones emocionales igualadas tanto para Hombre como para Mujer (`"highly expressive vocals, passionate, emotional"`). Utiliza el algoritmo avanzado de extracción de tono `rmvpe` (con protección 0.5) para evitar cortes silábicos en agudos.
-- **UI/UX Profesional:** Sistema de progresión interactivo en el frontend. Al finalizar una generación, el sistema habilita un botón dinámico para limpiar la pantalla e iniciar una nueva composición instantáneamente sin necesidad de refrescar la página entera.
-- **Masterización Acústica (FFmpeg DSP):** Implementación de compresión de bus (*Glue Compressor*) para amalgamar la voz con la pista. Se ha inyectado un Ecualizador de Presencia a 4000Hz para devolver el brillo y dicción a las consonantes perdidas durante la clonación RVC.
-- **Gestión Avanzada de VRAM (Offloading):** Diseñado para operar en GPUs comerciales (ej. RTX 4060 8GB). Transfiere inteligentemente componentes del modelo (DiT y vocoders) a la memoria RAM de CPU durante generaciones largas (hasta 3.5 minutos continuos) para evitar errores OOM (Out Of Memory).
-- **Control Inteligente de Duración (3.0 - 3.5 min):** El sistema calcula dinámicamente la duración de la canción en base a la longitud de la letra, asegurando estructuras musicales completas y comerciales estándar (180s - 210s) con Intros instrumentales automatizadas.
-- **Respaldo Legal Automático:** Cada canción genera un `CERTIFICADO_LEGAL.md` con huellas y stems aislados (`beat.wav`, `vocals.wav`), sirviendo como prueba irrefutable de autoría humana/local frente a las distribuidoras musicales.
+1. **Inteligencia de Letras (LLM):** Motor de composición lírica asistida. Sanitiza, estructura (Verso, Coro, Puente) y adapta el "prompt" del usuario para el motor musical.
+2. **Motor Generativo Text-to-Music (ACE-Step 1.5):** Utiliza un modelo de lenguaje de 1.7B parámetros y un modelo de difusión (DiT) turbo (8 pasos). Genera hasta 3.5 minutos continuos de música instrumental y vocal simultánea. Posee directrices estrictas de entonación y energía para asegurar un rendimiento humano.
+3. **Separación Acústica de Alta Fidelidad (UVR5 / BS-Roformer):** Extrae la voz de la base instrumental generada utilizando el modelo `BS-Roformer` (SDR ~12.97), considerado el estándar actual en separación de stems.
+4. **Purificación Vocal (DeepFilterNet 3):** Reduce el piso de ruido y limpia transitorios indeseados en la capa vocal con una atenuación quirúrgica.
+5. **Clonación Vocal Dinámica (RVC v2):** Permite re-grabar la voz extraída utilizando modelos de voz personalizados, impulsado por el algoritmo avanzado de extracción de tono `rmvpe`.
+6. **Masterización DSP Automatizada (FFmpeg):** Una vez procesada la voz, el sistema mezcla ambos stems (Base + Voz) empleando compresión niveladora suave, EQ analógico emulado, atenuadores de graves cruzados y un limitador `loudnorm` calibrado a **-13 LUFS** para cumplir con los estándares de streaming comercial.
 
-## 🏗️ Arquitectura y Carpetas (Inspección de Sistema)
+## 🏗️ Arquitectura del Sistema
 
-- `orchestrator.py`: El "Cerebro Central". Coordina el motor musical ACE-Step 1.5, la separación UVR5, clonación RVC y el Rack de Masterización de FFmpeg.
-- `ace_step_15_wrapper.py`: Capa de seguridad y aislamiento de memoria. Invoca el motor neuronal liberando VRAM de forma eficiente entre cada subproceso.
-- `api.py`: El servidor backend (FastAPI) que filtra los inputs del usuario, extrae las letras puras del LLM y lanza el Pipeline.
-- `audio_analyzer.py`: **Auditor de Calidad.** Revisa automáticamente cada canción generada (mide BPM y métricas vocales).
-- `models/`: Directorio donde residen los pesos neuronales (ACE-Step, UVR5, DeepFilterNet).
-- `gallery/`: Almacenamiento maestro. Aquí se deposita la canción final, los stems separados y el certificado legal.
+* `orchestrator.py`: Motor central. Controla la lógica secuencial (ACE-Step -> UVR5 -> RVC -> FFmpeg).
+* `ace_step_15_wrapper.py`: Capa de aislamiento de VRAM. Ejecuta el motor ACE-Step en un subproceso para garantizar la liberación de memoria en GPUs de 8GB.
+* `api.py`: Servidor backend (FastAPI) que provee la interfaz asíncrona para la cola de tareas (Jobs).
+* `frontend/`: Aplicación web moderna (HTML/JS/CSS) que ofrece una experiencia de usuario interactiva y fluida.
+* `gallery.db`: Base de datos SQLite que administra el catálogo musical generado.
+* `gallery/`: Directorio de almacenamiento definitivo. Por cada composición, guarda:
+  * Archivo máster final (`.wav`).
+  * Archivo de base instrumental aislada.
+  * Archivo de voz limpia aislada.
+  * `CERTIFICADO_LEGAL.md`: Documento criptográfico local que avala la autoría humana del diseño y el uso de la infraestructura.
 
----
+## 🛠️ Instrucciones de Instalación (Windows)
 
-## 🛠️ Instrucciones de Instalación
+### Requisitos Previos
+* **Sistema Operativo:** Windows 10/11.
+* **Hardware:** GPU NVIDIA con al menos 8GB de VRAM (Serie RTX 3000 o superior recomendada).
+* **Software:**
+  * [Python 3.10 o 3.11](https://www.python.org/downloads/) instalado y agregado al PATH.
+  * [Git](https://git-scm.com/) instalado.
+  * [FFmpeg](https://ffmpeg.org/) instalado y agregado al PATH del sistema.
 
-### Requisitos Previos (Para Windows y Linux)
-- **Python 3.10 o 3.11** instalado y agregado al PATH.
-- **Git** instalado.
-- Tarjeta Gráfica NVIDIA con al menos 8GB de VRAM. (Recomendado RTX 3060/4060 o superior).
-- **FFmpeg** instalado y agregado al PATH.
-
-### Instalación en Windows
-1. Clona o descarga este repositorio en tu disco duro.
-2. Ejecuta el archivo `setup_y_descargar.bat` haciendo doble clic.
-   * *Este script creará un entorno virtual aislado, instalará las dependencias necesarias de `requirements.txt` y descargará los modelos de IA pesados.*
-3. Una vez completada la instalación, ejecuta `iniciar.bat`.
-4. Abre tu navegador y dirígete a `http://localhost:8765/ui/index.html` para usar la plataforma.
-
-### Instalación en Linux (Ubuntu/Debian)
-1. Clona el repositorio y entra al directorio:
-   ```bash
+### Pasos de Instalación
+1. Clona este repositorio en tu disco local:
+   ```cmd
    git clone https://github.com/yemsy26/suno-local.git
    cd suno-local
    ```
-2. Instala FFmpeg a nivel sistema y Espeak:
-   ```bash
-   sudo apt update
-   sudo apt install ffmpeg espeak-ng
+2. Ejecuta el instalador automático:
+   ```cmd
+   setup_y_descargar.bat
    ```
-3. Crea y activa un entorno virtual de Python:
-   ```bash
-   python3 -m venv .venv_py311
-   source .venv_py311/bin/activate
-   ```
-4. Instala las dependencias y PyTorch con soporte CUDA:
-   ```bash
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-   pip install -r requirements.txt
-   ```
-5. Descarga los modelos de Inteligencia Artificial:
-   ```bash
-   python download_models.py
-   ```
-6. Inicia el servidor maestro:
-   ```bash
-   uvicorn api:app --host 0.0.0.0 --port 8765
-   ```
-7. Accede a través de tu navegador local en `http://localhost:8765/ui/index.html`.
+   *Este script inicializará un entorno virtual (venv), instalará las dependencias necesarias (`requirements.txt`), y descargará los pesos de los modelos de IA.*
 
----
+### Uso de la Plataforma
+1. Para iniciar el servidor y los motores neuronales, simplemente ejecuta:
+   ```cmd
+   iniciar.bat
+   ```
+2. El sistema confirmará que el entorno virtual y el backend están operativos.
+3. Abre tu navegador web favorito y navega hacia:  
+   **`http://localhost:8765/ui/index.html`**
 
-## ⚖️ Declaración Legal de Uso
-Este software y las piezas musicales que genera son de autoría exclusiva de **Ramón Antonio Burgos Jerez**. El sistema certifica criptográficamente el proceso de creación local para proteger la inversión financiera y de tiempo en plataformas de distribución profesional (Spotify, Apple Music). El titular posee el 100% de los derechos de monetización y publishing.
+## ⚖️ Declaración Legal y Derechos
+El autor, **Ramón Antonio Burgos Jerez**, diseñó e integró la lógica de orquestación, el motor de masterización DSP y el frontend de usuario. Todo el código alojado en este repositorio está cobijado bajo la **Licencia MIT**. Las piezas musicales producidas localmente a través de este software no están sujetas a regalías de terceros y pueden comercializarse de forma independiente.

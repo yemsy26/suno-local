@@ -34,11 +34,11 @@ def main():
 
     models_dir = os.path.join(os.path.dirname(__file__), "models")
 
-    logger.info("Initializing LLM handler (0.6B)...")
+    logger.info("Initializing LLM handler (1.7B — mejor articulacion en español)...")
     llm_handler = LLMHandler()
     status_msg, success = llm_handler.initialize(
         checkpoint_dir=models_dir,
-        lm_model_path="acestep-5Hz-lm-0.6B",
+        lm_model_path="acestep-5Hz-lm-1.7B",
         backend="pt",  # 'pt' fallback if vllm/mlx not available
         device=f"cuda:{args.device_id}",
         offload_to_cpu=True,
@@ -84,8 +84,9 @@ def main():
         seed=args.seed,
         # Parámetros de calidad 2026 (investigación industria):
         lm_negative_prompt=(
-            "silence, empty, no singing, monotonous, repetitive, boring, "
-            "instrumental only, music box, noise, distortion, bad quality"
+            "off pitch, out of tune, flat notes, spoken word, talking, speech, "
+            "low energy, lifeless, emotionless, monotonous, silence, empty, "
+            "instrumental only, bad vocal mixing, harsh, distortion, piercing"
         ),
         fade_out_duration=2.5,     # Fade suave al final — evita cortes bruscos
     )

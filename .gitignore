@@ -7,18 +7,13 @@ __pycache__/
 
 # Modelos pesados y directorios ignorados
 models/
-ace_step_repo/
 ace_step_1.5_repo/
-diffrhythm_repo/
-ace_step_repo_corrupted/
 gallery/
 *.db
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
+*.db-shm
+*.db-wal
 
-# Archivos de la RAMDisk o generados locales temporales
+# Archivos temporales
 chronos_vfs/
 temp/
 outputs/
@@ -39,10 +34,11 @@ outputs/
 # Logs y cachés adicionales
 logs/
 .cache/
-ffmpeg.exe
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
 
-ffprobe.exe
-
-
+# Binarios de FFmpeg locales
 ffmpeg.exe
 ffprobe.exe
